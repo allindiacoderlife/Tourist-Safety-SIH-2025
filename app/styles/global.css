@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .login-section {
+    @apply absolute w-full h-[60%] bottom-0 p-[20px] gap-4;
+  }
+  .title {
+    @apply font-bold text-5xl mb-6;
+  }
+  .label {
+    @apply font-bold text-xl;
+  }
+  .input {
+    @apply pb-0 border-b-[1px] border-purple-400;
+  }
+  .btn {
+    @apply items-center justify-center p-5 rounded-xl;
+  }
+}
