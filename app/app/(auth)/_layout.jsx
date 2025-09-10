@@ -10,7 +10,7 @@ import Login from "../../components/auth/Login";
 import Registration from "../../components/auth/Registration";
 import Welcome from "../../components/auth/Welcome";
 
-const AuthLayout = () => {
+const AuthLayout = ({ onAuthSuccess }) => {
   const translateY = useSharedValue(0);
   const opacity1 = useSharedValue(1);
   const opacity2 = useSharedValue(0);
@@ -103,11 +103,13 @@ const AuthLayout = () => {
         animatedStyle={loginStyle}
         onBackPress={handleBackPress}
         onRegPress={handleRegPress}
+        onAuthSuccess={onAuthSuccess}
         isVisible={currentScreen === "login"}
       />
       <Registration 
         animatedStyle={regStyle} 
         onBackPress={handleContinuePress}
+        onAuthSuccess={onAuthSuccess}
         isVisible={currentScreen === "registration"}
       />
     </View>
