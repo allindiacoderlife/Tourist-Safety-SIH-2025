@@ -1,7 +1,15 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
 
-const Login = ({ animatedStyle, onBackPress, onRegPress, isVisible }) => {
+const Login = ({ animatedStyle, onBackPress, onRegPress, onAuthSuccess, isVisible }) => {
+  const handleLogin = () => {
+    // Here you would typically validate credentials
+    // For now, we'll just call onAuthSuccess
+    if (onAuthSuccess) {
+      onAuthSuccess();
+    }
+  };
+
   return (
     <Animated.View
       className="absolute w-full h-[60%] bottom-0 p-[20px] gap-4"
@@ -25,7 +33,7 @@ const Login = ({ animatedStyle, onBackPress, onRegPress, isVisible }) => {
         </Pressable>
         <Text className="text-purple-400 font-bold">Forgot Password ?</Text>
       </View>
-      <Pressable className="btn bg-purple-400 ">
+      <Pressable className="btn bg-purple-400" onPress={handleLogin}>
         <Text className="text-white font-bold">Login</Text>
       </Pressable>
       <Pressable className="btn bg-gray-300" onPress={onBackPress}>

@@ -1,6 +1,14 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 import Animated from "react-native-reanimated";
-const Registration = ({ animatedStyle, onBackPress, isVisible }) => {
+const Registration = ({ animatedStyle, onBackPress, onAuthSuccess, isVisible }) => {
+  const handleRegister = () => {
+    // Here you would typically validate and create account
+    // For now, we'll just call onAuthSuccess
+    if (onAuthSuccess) {
+      onAuthSuccess();
+    }
+  };
+
   return (
     <Animated.View 
       className="absolute w-full h-[80%] bottom-0 p-[20px] gap-4" 
@@ -21,7 +29,7 @@ const Registration = ({ animatedStyle, onBackPress, isVisible }) => {
       <View className="w-full flex-row justify-end mb-8">
         <Text className="text-purple-400 font-bold">Forgot Password ?</Text>
       </View>
-      <Pressable className="btn bg-purple-400 ">
+      <Pressable className="btn bg-purple-400" onPress={handleRegister}>
         <Text className="text-white font-bold">Create New Account</Text>
       </Pressable>
       <Pressable className="btn bg-gray-300" onPress={onBackPress}>
