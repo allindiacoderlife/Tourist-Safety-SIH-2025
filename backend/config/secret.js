@@ -1,9 +1,9 @@
-const dotenv = require('dotenv');
-const path = require('path');
+const dotenv = require("dotenv");
+const path = require("path");
 
-dotenv.config({ path: path.join(__dirname, "../../.env") })
+dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-module.exports.secret = {
+module.exports = {
   port: process.env.PORT,
   db_url: process.env.MONGO_URI,
-}
+};

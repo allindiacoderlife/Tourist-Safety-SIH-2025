@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
-const { secret } = require('./secret');
+const { db_url } = require('./secret');
 
 mongoose.set('strictQuery', false);
 
 // mongodb url
-const MONGO_URI = secret.db_url;
+const MONGO_URI = db_url;
 
 const connectDB = async () => {
   try { 
