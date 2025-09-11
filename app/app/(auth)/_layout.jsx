@@ -8,13 +8,17 @@ import Animated, {
 } from "react-native-reanimated";
 import Login from "../../components/auth/Login";
 import Registration from "../../components/auth/Registration";
+import Verification from "../../components/auth/Verification";
 import Welcome from "../../components/auth/Welcome";
+import LivePhoto from "../../components/screens/LivePhoto";
 
 const AuthLayout = ({ onAuthSuccess }) => {
   const translateY = useSharedValue(0);
   const opacity1 = useSharedValue(1);
   const opacity2 = useSharedValue(0);
   const opacity3 = useSharedValue(0);
+  const opacity4 = useSharedValue(0);
+  const opacity5 = useSharedValue(0);
 
   const [currentScreen, setCurrentScreen] = useState("welcome");
 
@@ -34,29 +38,61 @@ const AuthLayout = ({ onAuthSuccess }) => {
     return { opacity: opacity3.value };
   });
 
+  const verifyStyle = useAnimatedStyle(() => {
+    return { opacity: opacity4.value };
+  });
+
+  const livePhotoStyle = useAnimatedStyle(() => {
+    return { opacity: opacity5.value };
+  });
+
   const animate = (current) => {
     let targetTranslateY = 0;
     let targetOpacity1 = 0;
     let targetOpacity2 = 0;
     let targetOpacity3 = 0;
+    let targetOpacity4 = 0;
+    let targetOpacity5 = 0;
     switch (current) {
       case "welcome":
         targetTranslateY = 0;
         targetOpacity1 = 1;
         targetOpacity2 = 0;
         targetOpacity3 = 0;
+        targetOpacity4 = 0;
+        targetOpacity5 = 0;
         break;
       case "login":
         targetTranslateY = -200;
         targetOpacity1 = 0;
         targetOpacity2 = 1;
         targetOpacity3 = 0;
+        targetOpacity4 = 0;
+        targetOpacity5 = 0;
         break;
       case "registration":
         targetTranslateY = -420;
         targetOpacity1 = 0;
         targetOpacity2 = 0;
         targetOpacity3 = 1;
+        targetOpacity4 = 0;
+        targetOpacity5 = 0;
+        break;
+      case "verification":
+        targetTranslateY = -200;
+        targetOpacity1 = 0;
+        targetOpacity2 = 0;
+        targetOpacity3 = 0;
+        targetOpacity4 = 1;
+        targetOpacity5 = 0;
+        break;
+      case "livephoto":
+        targetTranslateY = -400;
+        targetOpacity1 = 0;
+        targetOpacity2 = 0;
+        targetOpacity3 = 0;
+        targetOpacity4 = 0;
+        targetOpacity5 = 1;
         break;
     }
     translateY.value = withTiming(targetTranslateY, {
@@ -75,6 +111,14 @@ const AuthLayout = ({ onAuthSuccess }) => {
       duration: 500,
       easing: Easing.out(Easing.ease),
     });
+    opacity4.value = withTiming(targetOpacity4, {
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+    });
+    opacity5.value = withTiming(targetOpacity5, {
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+    });
     setCurrentScreen(current);
   };
 
@@ -84,15 +128,16 @@ const AuthLayout = ({ onAuthSuccess }) => {
 
   const handleRegPress = () => animate("registration");
 
+  const handleVerifyPress = () => animate("verification");
+
+  const handleLivePhotoPress = () => animate("livephoto");
+
   return (
     <View className="flex-1 bg-white">
       <Animated.Image
         source={require("../../assets/images/bg.png")}
         className="w-full h-[75%]"
-        style={[
-          { resizeMode: "cover" },
-          imageStyle,
-        ]}
+        style={[{ resizeMode: "cover" }, imageStyle]}
       />
       <Welcome
         animatedStyle={welcomeStyle}
@@ -106,11 +151,25 @@ const AuthLayout = ({ onAuthSuccess }) => {
         onAuthSuccess={onAuthSuccess}
         isVisible={currentScreen === "login"}
       />
-      <Registration 
-        animatedStyle={regStyle} 
+      <Registration
+        animatedStyle={regStyle}
         onBackPress={handleContinuePress}
+        onVerfiyPress={handleVerifyPress}
         onAuthSuccess={onAuthSuccess}
         isVisible={currentScreen === "registration"}
+      />
+      <Verification
+        animatedStyle={verifyStyle}
+        onBackPress={handleRegPress}
+        onLivePhotoPress={handleLivePhotoPress}
+        onAuthSuccess={onAuthSuccess}
+        isVisible={currentScreen === "verification"}
+      />
+      <LivePhoto
+        animatedStyle={livePhotoStyle}
+        onBackPress={handleVerifyPress}
+        onAuthSuccess={onAuthSuccess}
+        isVisible={currentScreen === "livephoto"}
       />
     </View>
   );
