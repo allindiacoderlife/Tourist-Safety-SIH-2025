@@ -21,6 +21,8 @@ const AuthLayout = ({ onAuthSuccess }) => {
   const opacity5 = useSharedValue(0);
 
   const [currentScreen, setCurrentScreen] = useState("welcome");
+  const [currentPhone, setCurrentPhone] = useState("");
+  const [verificationPurpose, setVerificationPurpose] = useState("registration");
 
   const imageStyle = useAnimatedStyle(() => {
     return { transform: [{ translateY: translateY.value }] };
@@ -128,7 +130,11 @@ const AuthLayout = ({ onAuthSuccess }) => {
 
   const handleRegPress = () => animate("registration");
 
-  const handleVerifyPress = () => animate("verification");
+  const handleVerifyPress = (phone, purpose = "registration") => {
+    setCurrentPhone(phone);
+    setVerificationPurpose(purpose);
+    animate("verification");
+  };
 
   const handleLivePhotoPress = () => animate("livephoto");
 
@@ -149,6 +155,7 @@ const AuthLayout = ({ onAuthSuccess }) => {
         onBackPress={handleBackPress}
         onRegPress={handleRegPress}
         onAuthSuccess={onAuthSuccess}
+        onVerifyPress={handleVerifyPress}
         isVisible={currentScreen === "login"}
       />
       <Registration
@@ -163,6 +170,8 @@ const AuthLayout = ({ onAuthSuccess }) => {
         onBackPress={handleRegPress}
         onLivePhotoPress={handleLivePhotoPress}
         onAuthSuccess={onAuthSuccess}
+        phone={currentPhone}
+        purpose={verificationPurpose}
         isVisible={currentScreen === "verification"}
       />
       <LivePhoto
