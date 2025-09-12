@@ -1,10 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const http = require("http");
 const app = express();
 
 const { port } = require("./config/secret");
 const connectDB = require("./config/db");
+const socketService = require("./services/socketService");
 
 // Import routes
 const apiRoutes = require("./routes");
@@ -12,6 +14,12 @@ const apiRoutes = require("./routes");
 const PORT = port || 7001;
 
 connectDB();
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+socketService.init(server);
 
 // middleware
 app.use(cors());
@@ -42,7 +50,8 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`API endpoints available at http://localhost:${PORT}/api`);
+  console.log(`Socket.IO server running on http://localhost:${PORT}`);
 });
