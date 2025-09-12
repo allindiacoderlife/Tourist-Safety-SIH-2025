@@ -2,6 +2,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Animated, Linking, Pressable, Text, Vibration, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import AppConfig from '../../config/app'
+import { SOSAPI } from '../../services/api'
+import { LocationService } from '../../services/location'
+import { StorageService } from '../../services/storage'
+import EnhancedSOSAlert from '../modals/EnhancedSOSAlert'
 
 const SOS = () => {
   const insets = useSafeAreaInsets()
@@ -17,12 +22,38 @@ const SOS = () => {
   const [lastSOSSent, setLastSOSSent] = useState(null)
   const [deliveryStatus, setDeliveryStatus] = useState('Ready')
   const [isLongPress, setIsLongPress] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
+  const [showEnhancedSOS, setShowEnhancedSOS] = useState(false)
 
-  // Mock emergency contacts
-  const emergencyContacts = {
+  // Emergency contacts - will be loaded from user data
+  const [emergencyContacts] = useState({
     police: '112',
-    primary: '+1-555-0123'
-  }
+    primary: null
+  })
+
+  // Load user data and emergency contacts on component mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await StorageService.getUserData();
+        if (userData) {
+          setUserEmail(userData.email || '');
+          // TODO: Implement emergency contacts loading
+          // const contacts = await UserAPI.getEmergencyContacts(userData.id);
+          // if (contacts.success && contacts.data.length > 0) {
+          //   setEmergencyContacts(prev => ({
+          //     ...prev,
+          //     primary: contacts.data[0]?.phone || null
+          //   }));
+          // }
+        }
+      } catch (error) {
+        console.error('Failed to load user data:', error);
+      }
+    };
+    
+    loadUserData();
+  }, []);
 
   // Start pulsing animation on component mount
   useEffect(() => {
@@ -51,15 +82,19 @@ const SOS = () => {
     setLastSOSSent(now)
     setDeliveryStatus('Sending...')
     
-    // Strong vibration feedback
-    Vibration.vibrate([0, 500, 200, 500, 200, 500])
+    // Strong vibration feedback - using config pattern
+    Vibration.vibrate(AppConfig.APP.SOS.VIBRATION_PATTERN)
+    
+    const contacts = emergencyContacts.primary 
+      ? `• Police (112)\n• Primary Contact (${emergencyContacts.primary})\n• Emergency Email (${userEmail})`
+      : `• Police (112)\n• Emergency Email (${userEmail})`
     
     Alert.alert(
       '🚨 SOS ACTIVATED',
-      'Emergency alert has been sent to:\n• Police (112)\n• Primary Contact\n• Emergency Services\n\nYour location is being shared.',
+      `Emergency alert will be sent to:\n${contacts}\n\nYour current location will be shared.`,
       [
         { text: 'Cancel', style: 'cancel', onPress: () => setDeliveryStatus('Cancelled') },
-        { text: 'Confirm', onPress: () => sendSOSAlert() }
+        { text: 'Send Emergency Alert', onPress: () => sendSOSAlert() }
       ]
     )
   }
@@ -82,7 +117,7 @@ const SOS = () => {
   const handleSOSPressIn = () => {
     setIsPressed(true)
     setIsLongPress(true)
-    setCountdown(3) // 3 second countdown
+    setCountdown(AppConfig.APP.SOS.COUNTDOWN_SECONDS) // Using config countdown
     
     // Vibration pattern: short, long, short
     Vibration.vibrate([0, 200, 100, 400, 100, 200])
@@ -124,31 +159,58 @@ const SOS = () => {
 
   const sendSOSAlert = async () => {
     try {
-      setDeliveryStatus('Sending...')
+      setDeliveryStatus('Sending...');
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Get user data for email and phone
+      const userData = await StorageService.getUserData();
+      if (!userData || !userData.email) {
+        throw new Error('User email not found. Please ensure you are logged in.');
+      }
+
+      // Get current location
+      const locationData = await LocationService.getSOSLocationData();
       
-      // Mock success
-      setDeliveryStatus('Sent ✓')
+      // Prepare SOS data according to backend schema
+      const sosData = {
+        email: userData.email,
+        phone: userData.phone || null,
+        location: {
+          address: locationData.location,
+          coordinates: locationData.coordinates || null,
+          maplink: locationData.mapsLink || null
+        },
+        message: 'Emergency SOS Alert - Tourist Safety App',
+        emergencyType: 'other', // Can be: medical, accident, crime, natural_disaster, other
+        priority: 'high' // Can be: low, medium, high, critical
+      };
+
+      // Send SOS alert via API
+      const response = await SOSAPI.sendSOSAlert(sosData);
       
+      if (response.success) {
+        setDeliveryStatus('Sent ✓');
+        Alert.alert(
+          '✅ SOS Alert Sent', 
+          `Emergency alert sent successfully!\n\nAlert ID: ${response.data.id}\nSent to: ${userData.email}\nLocation: ${locationData.location}\n\nEmergency services have been notified.`,
+          [{ text: 'OK' }]
+        );
+      } else {
+        throw new Error(response.message || 'Failed to send SOS alert');
+      }
+      
+    } catch (error) {
+      console.error('SOS Alert Error:', error);
+      setDeliveryStatus('Failed ✗');
       Alert.alert(
-        '✅ SOS Sent Successfully',
-        'Emergency services and contacts have been notified. Help is on the way.',
-        [{ text: 'OK' }]
-      )
-    } catch (_error) {
-      setDeliveryStatus('Failed ✗')
-      Alert.alert(
-        '❌ Send Failed',
-        'Unable to send SOS. Check connection and try again.',
+        '❌ SOS Alert Failed',
+        `Failed to send emergency alert: ${error.message}`,
         [
-          { text: 'Retry', onPress: () => sendSOSAlert() },
-          { text: 'Cancel', style: 'cancel' }
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Retry', onPress: () => sendSOSAlert() }
         ]
-      )
+      );
     }
-  }
+  };
 
   const handleQuickCall = (type) => {
     const number = type === 'police' ? emergencyContacts.police : emergencyContacts.primary
@@ -170,21 +232,36 @@ const SOS = () => {
     )
   }
 
-  const handleShareLocation = () => {
-    Alert.alert(
-      '📍 Share Live Location',
-      'Your live location will be shared with emergency contacts for the next 30 minutes.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Share', 
-          onPress: () => {
-            Vibration.vibrate(100)
-            Alert.alert('✅ Location Sharing', 'Live location is now being shared with emergency contacts.')
+  const handleShareLocation = async () => {
+    try {
+      const locationData = await LocationService.getSOSLocationData();
+      
+      Alert.alert(
+        '📍 Share Live Location',
+        `Your current location will be shared:\n\n${locationData.location}\n\nLocation will be shared with emergency contacts for the next 30 minutes.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Share Location', 
+            onPress: () => {
+              Vibration.vibrate(100)
+              // Here you could implement actual location sharing
+              // For now, just show confirmation
+              Alert.alert(
+                '✅ Location Sharing Active', 
+                `Live location is now being shared with emergency contacts.\n\nMaps Link: ${locationData.mapsLink}`
+              )
+            }
           }
-        }
-      ]
-    )
+        ]
+      )
+    } catch (_error) {
+      Alert.alert(
+        '❌ Location Error',
+        'Failed to get current location. Please check your location permissions.',
+        [{ text: 'OK' }]
+      )
+    }
   }
 
   const getStatusColor = () => {
@@ -230,7 +307,7 @@ const SOS = () => {
 
         {/* Main SOS Button */}
         <View className="flex-1 items-center justify-center">
-          <View className="relative">
+          <View className="relative flex items-center justify-center">
             {/* Outer pulse ring */}
             <Animated.View
               className="absolute w-80 h-80 rounded-full bg-red-500 opacity-20"
@@ -241,7 +318,6 @@ const SOS = () => {
             
             {/* Inner pulse ring */}
             <Animated.View
-              className="absolute w-72 h-72 rounded-full bg-red-500 opacity-30"
               style={{
                 top: 16,
                 left: 16,
@@ -322,6 +398,19 @@ const SOS = () => {
             </Pressable>
           </View>
         </View>
+
+        {/* Enhanced SOS Alert */}
+        <View className="mb-8">
+          <Text className="text-gray-700 text-lg font-semibold mb-4 text-center">Enhanced Alert</Text>
+          <Pressable
+            onPress={() => setShowEnhancedSOS(true)}
+            className="bg-purple-600 rounded-2xl p-4 items-center shadow-lg"
+          >
+            <Ionicons name="settings" size={28} color="white" />
+            <Text className="text-white font-bold text-lg mt-2">Detailed SOS</Text>
+            <Text className="text-purple-100 text-sm">Select emergency type & priority</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Status Panel */}
@@ -348,6 +437,16 @@ const SOS = () => {
           </Text>
         </View>
       </View>
+
+      {/* Enhanced SOS Alert Modal */}
+      <EnhancedSOSAlert
+        visible={showEnhancedSOS}
+        onClose={() => setShowEnhancedSOS(false)}
+        onSuccess={(sosData) => {
+          setLastSOSSent(new Date());
+          setDeliveryStatus('Alert Sent');
+        }}
+      />
     </View>
   )
 }

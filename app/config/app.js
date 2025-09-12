@@ -24,6 +24,12 @@ export const Config = {
       USER: {
         PROFILE: '/user',
         EMERGENCY_CONTACTS: '/user/:userId/emergency-contacts',
+      },
+      SOS: {
+        SEND: '/sos/send',
+        LIST: '/sos',
+        GET_BY_ID: '/sos/:id',
+        UPDATE_STATUS: '/sos/:id/status',
       }
     }
   },
@@ -44,6 +50,38 @@ export const Config = {
       MIN_LENGTH: 10,
       MAX_LENGTH: 15,
       COUNTRY_CODE: '+91', // Default country code for India
+    },
+    
+    // SOS Configuration
+    SOS: {
+      COUNTDOWN_SECONDS: 3, // Countdown before SOS activation
+      LOCATION_TIMEOUT: 10000, // Location request timeout in ms
+      VIBRATION_PATTERN: [0, 500, 200, 500, 200, 500], // Emergency vibration pattern
+      
+      // Emergency types available
+      EMERGENCY_TYPES: [
+        { value: 'medical', label: 'Medical Emergency', icon: 'medical' },
+        { value: 'accident', label: 'Accident', icon: 'car-crash' },
+        { value: 'crime', label: 'Crime/Safety', icon: 'shield-alert' },
+        { value: 'natural_disaster', label: 'Natural Disaster', icon: 'thunderstorm' },
+        { value: 'other', label: 'Other Emergency', icon: 'alert-circle' }
+      ],
+      
+      // Priority levels
+      PRIORITY_LEVELS: [
+        { value: 'low', label: 'Low Priority', color: '#4CAF50' },
+        { value: 'medium', label: 'Medium Priority', color: '#FF9800' },
+        { value: 'high', label: 'High Priority', color: '#FF5722' },
+        { value: 'critical', label: 'Critical', color: '#F44336' }
+      ],
+      
+      // Status types
+      STATUS_TYPES: [
+        { value: 'pending', label: 'Pending', color: '#FF9800' },
+        { value: 'acknowledged', label: 'Acknowledged', color: '#2196F3' },
+        { value: 'resolved', label: 'Resolved', color: '#4CAF50' },
+        { value: 'cancelled', label: 'Cancelled', color: '#9E9E9E' }
+      ]
     }
   },
   
