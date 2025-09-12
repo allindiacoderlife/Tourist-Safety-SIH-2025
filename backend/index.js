@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const http = require("http");
 const app = express();
 
 const { port } = require("./config/secret");
@@ -50,7 +49,7 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`API endpoints available at http://localhost:${PORT}/api`);
   console.log(`Socket.IO server running on http://localhost:${PORT}`);
