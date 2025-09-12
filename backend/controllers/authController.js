@@ -85,9 +85,23 @@ const completeRegistration = async (req, res) => {
     }
 
     if (user.isVerified) {
-      return res.status(400).json({
-        success: false,
-        message: 'User is already verified'
+      return res.status(200).json({
+        success: true,
+        message: 'User is already verified. You can now login.',
+        data: {
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            country: user.country,
+            isVerified: user.isVerified
+          }
+        },
+        nextStep: {
+          action: 'login',
+          message: 'User is already registered and verified. Please proceed to login.'
+        }
       });
     }
 
