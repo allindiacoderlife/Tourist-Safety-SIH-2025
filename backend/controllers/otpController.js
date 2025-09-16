@@ -25,6 +25,7 @@ const sendOTP = async (req, res) => {
 
     // Send OTP using textflow
     const result = await OTPService.sendOTP(phone);
+    
 
     res.status(200).json(result);
 

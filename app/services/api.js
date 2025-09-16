@@ -182,4 +182,39 @@ export class UserAPI {
   }
 }
 
+// SOS API calls
+export class SOSAPI {
+  // Send SOS alert
+  static async sendSOSAlert(sosData) {
+    return APIService.makeRequest('/sos/send', {
+      method: 'POST',
+      body: sosData,
+    });
+  }
+  
+  // Get SOS history
+  static async getSOSHistory(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/sos?${queryString}` : '/sos';
+    return APIService.makeRequest(endpoint, {
+      method: 'GET',
+    });
+  }
+  
+  // Get single SOS by ID
+  static async getSOSById(sosId) {
+    return APIService.makeRequest(`/sos/${sosId}`, {
+      method: 'GET',
+    });
+  }
+  
+  // Update SOS status
+  static async updateSOSStatus(sosId, status) {
+    return APIService.makeRequest(`/sos/${sosId}/status`, {
+      method: 'PUT',
+      body: { status },
+    });
+  }
+}
+
 export { APIService };

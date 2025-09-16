@@ -30,7 +30,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             <View key={index} className="flex-1 items-center justify-center relative">
               <Pressable
                 onPress={onPress}
-                className="bg-red-500 rounded-full p-4 shadow-lg absolute -top-6 border-4 border-white"
+                className="bg-red-500 rounded-full p-4 shadow-lg absolute -top-10 border-4 border-white"
                 style={{
                   shadowColor: '#ef4444',
                   shadowOffset: { width: 0, height: 4 },
