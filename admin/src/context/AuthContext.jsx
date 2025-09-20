@@ -64,7 +64,10 @@ export const useAuth = () => {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null)
+  const [currentUser, setCurrentUser] = useState(() => {
+    const stored = localStorage.getItem('currentUser');
+    return stored ? JSON.parse(stored) : null;
+  });
 
   const login = (email, password) => {
     const central = mockCentralUsers.find((c) => c.email === email && c.password === password)
@@ -77,6 +80,7 @@ export const AuthProvider = ({ children }) => {
         password: central.password,
       }
       setCurrentUser(user)
+      localStorage.setItem('currentUser', JSON.stringify(user));
       return true
     }
 
@@ -90,6 +94,7 @@ export const AuthProvider = ({ children }) => {
         password: policeStation.password,
       }
       setCurrentUser(user)
+      localStorage.setItem('currentUser', JSON.stringify(user));
       return true
     }
 
@@ -103,6 +108,7 @@ export const AuthProvider = ({ children }) => {
         password: regularUser.password,
       }
       setCurrentUser(user)
+      localStorage.setItem('currentUser', JSON.stringify(user));
       return true
     }
 
@@ -110,7 +116,8 @@ export const AuthProvider = ({ children }) => {
   }
 
   const logout = () => {
-    setCurrentUser(null)
+  setCurrentUser(null)
+  localStorage.removeItem('currentUser');
   }
   return (
     <AuthContext.Provider
