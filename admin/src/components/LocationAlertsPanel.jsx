@@ -1,41 +1,43 @@
-import { useState, useEffect, useCallback } from 'react'
-import serpApiService from '../services/serpApiService'
+import { useState, useEffect, useCallback } from "react";
+import serpApiService from "../services/serpApiService";
 
 const LocationAlertsPanel = ({ location, onAlertUpdate }) => {
-  const [alerts, setAlerts] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const fetchLocationAlerts = useCallback(async () => {
-    if (!location) return
-    
-    setLoading(true)
+    if (!location) return;
+
+    setLoading(true);
     try {
-      const locationName = `${location.lat},${location.lng}`
-      const alertsData = await serpApiService.getLocationAlerts(locationName)
-      setAlerts(alertsData)
+      const locationName = `${location.lat},${location.lng}`;
+      const alertsData = await serpApiService.getLocationAlerts(locationName);
+      setAlerts(alertsData);
       if (onAlertUpdate) {
-        onAlertUpdate(alertsData.length)
+        onAlertUpdate(alertsData.length);
       }
     } catch (error) {
-      console.error('Error fetching location alerts:', error)
+      console.error("Error fetching location alerts:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [location, onAlertUpdate])
+  }, [location, onAlertUpdate]);
 
   useEffect(() => {
-    fetchLocationAlerts()
-  }, [fetchLocationAlerts])
+    fetchLocationAlerts();
+  }, [fetchLocationAlerts]);
 
   if (loading) {
     return (
       <div className="bg-yellow-50 p-4 rounded-lg">
         <div className="animate-pulse">
-          <div className="font-medium text-yellow-800 mb-2">Loading Alerts...</div>
+          <div className="font-medium text-yellow-800 mb-2">
+            Loading Alerts...
+          </div>
           <div className="h-4 bg-yellow-200 rounded w-3/4"></div>
         </div>
       </div>
-    )
+    );
   }
 
   if (alerts.length === 0) {
@@ -44,13 +46,13 @@ const LocationAlertsPanel = ({ location, onAlertUpdate }) => {
         <div className="font-medium text-green-800">✅ No Active Alerts</div>
         <p className="text-sm text-green-600">Area appears to be safe</p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="bg-red-50 p-4 rounded-lg">
       <div className="font-medium text-red-800 mb-2">
-        ⚠️ {alerts.length} Active Alert{alerts.length > 1 ? 's' : ''}
+        ⚠️ {alerts.length} Active Alert{alerts.length > 1 ? "s" : ""}
       </div>
       <div className="space-y-2 max-h-60 overflow-y-auto">
         {alerts.map((alert, index) => (
@@ -65,7 +67,7 @@ const LocationAlertsPanel = ({ location, onAlertUpdate }) => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LocationAlertsPanel
+export default LocationAlertsPanel;

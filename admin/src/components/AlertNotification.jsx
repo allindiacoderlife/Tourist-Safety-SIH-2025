@@ -1,49 +1,28 @@
 import { useEffect, useState } from 'react';
 
 const AlertNotification = () => {
-  const [sosAlerts, setSosAlerts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchSosAlerts = async () => {
-      try {
-        const response = await fetch('http://10.68.145.252:7001/sos/');
-        const data = await response.json();
-        
-        if (data.success) {
-          setSosAlerts(data.data.sosMessages.filter(msg => msg.status === 'pending'));
-        }
-      } catch (err) {
-        console.error('Error fetching SOS alerts:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSosAlerts();
-    const interval = setInterval(fetchSosAlerts, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleAcknowledge = async (sosId) => {
-    try {
-      const response = await fetch(`http://10.68.145.252:7001/api/sos/${sosId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'acknowledged' }),
-      });
-
-      if (response.ok) {
-        setSosAlerts(prev => prev.filter(alert => alert._id !== sosId));
-      }
-    } catch (err) {
-      console.error('Error acknowledging SOS:', err);
+  const [sosAlerts, setSosAlerts] = useState([
+    {
+      _id: '1',
+      priority: 'critical',
+      emergencyType: 'medical',
+      message: 'Mock medical emergency alert',
+      location: { address: 'Connaught Place, Delhi' },
+      createdAt: new Date().toISOString()
+    },
+    {
+      _id: '2',
+      priority: 'normal',
+      emergencyType: 'sos',
+      message: 'Mock SOS alert',
+      location: { address: 'Rajiv Chowk, Delhi' },
+      createdAt: new Date().toISOString()
     }
+  ]);
+  const handleAcknowledge = (sosId) => {
+    setSosAlerts(prev => prev.filter(alert => alert._id !== sosId));
   };
-
-  if (isLoading || sosAlerts.length === 0) return null;
+  if (sosAlerts.length === 0) return null;
 
   return (
     <div className="fixed top-20 right-4 z-50 space-y-2">
