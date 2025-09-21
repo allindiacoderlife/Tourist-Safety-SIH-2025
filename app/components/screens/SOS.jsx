@@ -173,19 +173,19 @@ const SOS = () => {
       // Prepare SOS data according to backend schema
       const sosData = {
         email: userData.email,
-        phone: userData.phone || null,
-        location: {
-          address: locationData.location,
-          coordinates: locationData.coordinates || null,
-          maplink: locationData.mapsLink || null
-        },
-        message: 'Emergency SOS Alert - Tourist Safety App',
-        emergencyType: 'other', // Can be: medical, accident, crime, natural_disaster, other
-        priority: 'high' // Can be: low, medium, high, critical
+        location: locationData.location,
+        coordinates: locationData.coordinates,
+        mapsLink: locationData.mapsLink,
+        accuracy: locationData.accuracy || 10
       };
 
       // Send SOS alert via API
-      const response = await SOSAPI.sendSOSAlert(sosData);
+      const token = await StorageService.getAuthToken();
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+      
+      const response = await SOSAPI.sendSOSAlert(sosData, token);
       
       if (response.success) {
         setDeliveryStatus('Sent ✓');

@@ -40,6 +40,12 @@ const SOSTest = () => {
     try {
       addResult('SOS API', 'TESTING...', 'Testing SOS API endpoint');
       
+      const token = await StorageService.getAuthToken();
+      if (!token) {
+        addResult('SOS API', 'ERROR', 'No authentication token found');
+        return;
+      }
+      
       const mockSOSData = {
         email: 'test@example.com',
         location: 'Test Location for SOS API',
@@ -49,7 +55,7 @@ const SOSTest = () => {
         accuracy: 10
       };
       
-      const response = await SOSAPI.sendSOSAlert(mockSOSData);
+      const response = await SOSAPI.sendSOSAlert(mockSOSData, token);
       addResult('SOS API', response.success ? 'PASS' : 'FAIL', 
         response.success ? 'SOS alert sent successfully' : response.message);
     } catch (error) {

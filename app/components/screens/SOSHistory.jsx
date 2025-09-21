@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SOSAPI } from '../../services/api';
+import { StorageService } from '../../services/storage';
 
 const SOSHistory = () => {
   const [sosHistory, setSOSHistory] = useState([]);
@@ -25,7 +26,13 @@ const SOSHistory = () => {
   const loadSOSHistory = async (page = 1, showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const response = await SOSAPI.getSOSHistory({
+      const token = await StorageService.getAuthToken();
+      if (!token) {
+        Alert.alert('Error', 'Authentication token not found. Please log in again.');
+        return;
+      }
+      
+      const response = await SOSAPI.getSOSHistory(token, {
         page,
         limit: 10,
         sortBy: 'createdAt',
@@ -33,7 +40,7 @@ const SOSHistory = () => {
       });
       
       if (response.success) {
-        setSOSHistory(response.data.sosMessages);
+        setSOSHistory(response.data.sosAlerts);
         setPagination(response.data.pagination);
       }
     } catch (error) {
@@ -71,7 +78,13 @@ const SOSHistory = () => {
 
   const performStatusUpdate = async (sosId, newStatus) => {
     try {
-      const response = await SOSAPI.updateSOSStatus(sosId, newStatus);
+      const token = await StorageService.getAuthToken();
+      if (!token) {
+        Alert.alert('Error', 'Authentication token not found. Please log in again.');
+        return;
+      }
+      
+      const response = await SOSAPI.updateSOSStatus(sosId, newStatus, token);
       if (response.success) {
         Alert.alert('Success', `SOS status updated to ${newStatus}`);
         loadSOSHistory();
@@ -84,20 +97,25 @@ const SOSHistory = () => {
 
   const viewSOSDetails = async (sosId) => {
     try {
-      const response = await SOSAPI.getSOSById(sosId);
+      const token = await StorageService.getAuthToken();
+      if (!token) {
+        Alert.alert('Error', 'Authentication token not found. Please log in again.');
+        return;
+      }
+      
+      const response = await SOSAPI.getSOSById(sosId, token);
       if (response.success) {
         const sos = response.data;
         Alert.alert(
           'SOS Details',
-          `ID: ${sos._id}\n` +
+          `ID: ${sos.id}\n` +
           `Email: ${sos.email}\n` +
-          `Phone: ${sos.phone || 'Not provided'}\n` +
-          `Location: ${sos.location.address}\n` +
-          `Type: ${sos.emergencyType}\n` +
-          `Priority: ${sos.priority}\n` +
+          `Location: ${sos.location}\n` +
+          `Coordinates: ${sos.coordinates.latitude}, ${sos.coordinates.longitude}\n` +
+          `Accuracy: ±${sos.accuracy} meters\n` +
           `Status: ${sos.status}\n` +
-          `Message: ${sos.message}\n` +
-          `Created: ${new Date(sos.createdAt).toLocaleString()}`,
+          `Created: ${new Date(sos.createdAt).toLocaleString()}\n` +
+          `Updated: ${new Date(sos.updatedAt).toLocaleString()}`,
           [{ text: 'OK' }]
         );
       }
@@ -114,26 +132,6 @@ const SOSHistory = () => {
       case 'resolved': return '#4CAF50';
       case 'cancelled': return '#9E9E9E';
       default: return '#666';
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'critical': return '#F44336';
-      case 'high': return '#FF5722';
-      case 'medium': return '#FF9800';
-      case 'low': return '#4CAF50';
-      default: return '#666';
-    }
-  };
-
-  const getEmergencyIcon = (type) => {
-    switch (type) {
-      case 'medical': return 'medical';
-      case 'accident': return 'car-crash';
-      case 'crime': return 'shield-alert';
-      case 'natural_disaster': return 'thunderstorm';
-      default: return 'alert-circle';
     }
   };
 
@@ -198,9 +196,9 @@ const SOSHistory = () => {
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Ionicons 
-                    name={getEmergencyIcon(sos.emergencyType)} 
+                    name="alert-circle" 
                     size={24} 
-                    color={getPriorityColor(sos.priority)} 
+                    color={getStatusColor(sos.status)} 
                   />
                   <Text style={{
                     fontSize: 16,
@@ -208,7 +206,7 @@ const SOSHistory = () => {
                     marginLeft: 8,
                     color: '#333'
                   }}>
-                    {sos.emergencyType.charAt(0).toUpperCase() + sos.emergencyType.slice(1)}
+                    SOS Alert
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -227,10 +225,10 @@ const SOSHistory = () => {
 
               {/* Content */}
               <Text style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
-                {sos.message}
+                📧 {sos.email}
               </Text>
               <Text style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>
-                📍 {sos.location.address}
+                📍 {sos.location}
               </Text>
               <Text style={{ fontSize: 12, color: '#999', marginBottom: 12 }}>
                 📅 {new Date(sos.createdAt).toLocaleString()}

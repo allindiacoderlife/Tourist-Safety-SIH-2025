@@ -2,7 +2,7 @@ import { Pressable, Text, View, Alert } from "react-native";
 import { useState, useEffect } from "react";
 import { OtpInput } from "react-native-otp-entry";
 import Animated from "react-native-reanimated";
-import { OTPAPI, AuthAPI } from "../../services/api";
+import { AuthAPI } from "../../services/api";
 import { StorageService } from "../../services/storage";
 
 const Verification = ({
@@ -13,6 +13,8 @@ const Verification = ({
   isVisible,
   phone,
   purpose = 'registration', // 'registration' or 'login'
+  email, // for registration
+  loginMethod = 'phone', // 'phone' or 'email' for login
 }) => {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,46 +40,47 @@ const Verification = ({
       return;
     }
 
-    if (!phone) {
+    if (purpose === 'login' && loginMethod === 'phone' && !phone) {
+      Alert.alert("Error", "Phone number is missing");
+      return;
+    }
+
+    if (purpose === 'login' && loginMethod === 'email' && !email) {
+      Alert.alert("Error", "Email is missing");
+      return;
+    }
+
+    if (purpose === 'registration' && !phone) {
       Alert.alert("Error", "Phone number is missing");
       return;
     }
 
     setLoading(true);
     try {
-      // Step 1: Verify OTP
-      const verifyResult = await OTPAPI.verifyOTP(phone, otp);
-      
-      if (verifyResult.success) {
-        if (purpose === 'registration') {
-          // Complete registration
-          const completeResult = await AuthAPI.completeRegistration(phone, otp);
-          if (completeResult.success) {
-            // Save user data to storage
-            await StorageService.saveUserData(completeResult.data.user || completeResult.data);
-            await StorageService.saveAuthToken('temp_token_' + Date.now());
-            
-            if (completeResult.nextStep && completeResult.nextStep.action === 'login') {
-              // User was already verified, show login success message
-              Alert.alert("Welcome Back!", "You are already registered. Login successful!");
-              onAuthSuccess && onAuthSuccess(completeResult.data);
-            } else {
-              // Normal registration completion
-              Alert.alert("Success", "Registration completed successfully!");
-              onLivePhotoPress && onLivePhotoPress();
-            }
-          }
-        } else if (purpose === 'login') {
-          // Complete login
-          const loginResult = await AuthAPI.verifyLogin(phone, otp);
-          if (loginResult.success) {
-            // Save user data to storage
-            await StorageService.saveUserData(loginResult.data.user);
-            await StorageService.saveAuthToken('temp_token_' + Date.now());
-            
-            Alert.alert("Success", "Login successful!");
-            onAuthSuccess && onAuthSuccess(loginResult.data);
-          }
+      if (purpose === 'registration') {
+        // Complete registration
+        const completeResult = await AuthAPI.completeRegistration({ email, phone, otp });
+        if (completeResult.success) {
+          // Save user data to storage
+          await StorageService.saveUserData(completeResult.data.user || completeResult.data);
+          await StorageService.saveAuthToken(completeResult.data.token);
+          
+          Alert.alert("Success", "Registration completed successfully!");
+          onLivePhotoPress && onLivePhotoPress();
+        }
+      } else if (purpose === 'login') {
+        // Complete login
+        const loginResult = loginMethod === 'phone' 
+          ? await AuthAPI.verifyLoginPhone(phone, otp)
+          : await AuthAPI.verifyLoginEmail(email, otp);
+        
+        if (loginResult.success) {
+          // Save user data to storage
+          await StorageService.saveUserData(loginResult.data.user);
+          await StorageService.saveAuthToken(loginResult.data.token);
+          
+          Alert.alert("Success", "Login successful!");
+          onAuthSuccess && onAuthSuccess(loginResult.data);
         }
       }
     } catch (error) {
@@ -89,14 +92,33 @@ const Verification = ({
   };
 
   const handleResendOTP = async () => {
-    if (!phone) {
+    if (purpose === 'login' && loginMethod === 'phone' && !phone) {
+      Alert.alert("Error", "Phone number is missing");
+      return;
+    }
+
+    if (purpose === 'login' && loginMethod === 'email' && !email) {
+      Alert.alert("Error", "Email is missing");
+      return;
+    }
+
+    if (purpose === 'registration' && !phone) {
       Alert.alert("Error", "Phone number is missing");
       return;
     }
 
     setResendLoading(true);
     try {
-      const result = await OTPAPI.sendOTP(phone, purpose);
+      let result;
+      if (purpose === 'registration') {
+        // Resend registration OTP
+        result = await AuthAPI.register({ name: '', email, phone }); // Minimal data, backend checks existing
+      } else {
+        // Resend login OTP
+        const loginData = loginMethod === 'phone' ? { phone } : { email };
+        result = await AuthAPI.login(loginData);
+      }
+      
       if (result.success) {
         Alert.alert("Success", "OTP sent successfully!");
         setTimer(60); // Reset timer
@@ -117,7 +139,7 @@ const Verification = ({
     >
       <Text className="title">Verification</Text>
       <Text className="text-gray-600 mb-4">
-        Enter the 6-digit code sent to {phone}
+        Enter the 6-digit code sent to {purpose === 'login' && loginMethod === 'email' ? email : phone}
       </Text>
       <OtpInput
         numberOfDigits={6}

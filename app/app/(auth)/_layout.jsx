@@ -22,7 +22,9 @@ const AuthLayout = ({ onAuthSuccess }) => {
 
   const [currentScreen, setCurrentScreen] = useState("welcome");
   const [currentPhone, setCurrentPhone] = useState("");
+  const [currentEmail, setCurrentEmail] = useState("");
   const [verificationPurpose, setVerificationPurpose] = useState("registration");
+  const [currentLoginMethod, setCurrentLoginMethod] = useState("phone");
 
   const imageStyle = useAnimatedStyle(() => {
     return { transform: [{ translateY: translateY.value }] };
@@ -65,7 +67,7 @@ const AuthLayout = ({ onAuthSuccess }) => {
         targetOpacity5 = 0;
         break;
       case "login":
-        targetTranslateY = -200;
+        targetTranslateY = -100;
         targetOpacity1 = 0;
         targetOpacity2 = 1;
         targetOpacity3 = 0;
@@ -73,7 +75,7 @@ const AuthLayout = ({ onAuthSuccess }) => {
         targetOpacity5 = 0;
         break;
       case "registration":
-        targetTranslateY = -420;
+        targetTranslateY = -300;
         targetOpacity1 = 0;
         targetOpacity2 = 0;
         targetOpacity3 = 1;
@@ -130,9 +132,11 @@ const AuthLayout = ({ onAuthSuccess }) => {
 
   const handleRegPress = () => animate("registration");
 
-  const handleVerifyPress = (phone, purpose = "registration") => {
-    setCurrentPhone(phone);
+  const handleVerifyPress = (identifier, purpose = "registration", loginMethod = "phone", email = "") => {
+    setCurrentPhone(loginMethod === 'phone' ? identifier : "");
+    setCurrentEmail(loginMethod === 'email' ? identifier : email);
     setVerificationPurpose(purpose);
+    setCurrentLoginMethod(loginMethod);
     animate("verification");
   };
 
@@ -171,7 +175,9 @@ const AuthLayout = ({ onAuthSuccess }) => {
         onLivePhotoPress={handleLivePhotoPress}
         onAuthSuccess={onAuthSuccess}
         phone={currentPhone}
+        email={currentEmail}
         purpose={verificationPurpose}
+        loginMethod={currentLoginMethod}
         isVisible={currentScreen === "verification"}
       />
       <LivePhoto

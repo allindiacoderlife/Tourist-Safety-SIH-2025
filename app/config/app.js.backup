@@ -28,12 +28,6 @@ export const Config = {
         VERIFY: '/users/:id/verify',
         GET_BY_EMAIL: '/users/email/:email',
         GET_BY_PHONE: '/users/phone/:phone',
-      },
-      SOS: {
-        SEND: '/sos/send',
-        LIST: '/sos',
-        GET_BY_ID: '/sos/:id',
-        UPDATE_STATUS: '/sos/:id/status',
       }
     }
   },
@@ -63,25 +57,6 @@ export const Config = {
       AMBULANCE_NUMBER: '108',
       SOS_COUNTDOWN: 3, // seconds
       VIBRATION_PATTERN: [0, 500, 200, 500, 200, 500],
-    },
-
-    // SOS Configuration
-    SOS: {
-      COUNTDOWN_SECONDS: 3,
-      VIBRATION_PATTERN: [0, 500, 200, 500, 200, 500],
-      EMERGENCY_TYPES: [
-        { value: 'medical', label: 'Medical Emergency', icon: 'medical' },
-        { value: 'accident', label: 'Accident', icon: 'car' },
-        { value: 'crime', label: 'Crime/Safety Threat', icon: 'shield' },
-        { value: 'natural_disaster', label: 'Natural Disaster', icon: 'thunderstorm' },
-        { value: 'other', label: 'Other Emergency', icon: 'warning' }
-      ],
-      PRIORITY_LEVELS: [
-        { value: 'low', label: 'Low Priority', color: '#4CAF50' },
-        { value: 'medium', label: 'Medium Priority', color: '#FF9800' },
-        { value: 'high', label: 'High Priority', color: '#FF5722' },
-        { value: 'critical', label: 'Critical Emergency', color: '#F44336' }
-      ]
     }
   },
 
