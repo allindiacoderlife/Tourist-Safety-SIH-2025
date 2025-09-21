@@ -132,11 +132,20 @@ const AuthLayout = ({ onAuthSuccess }) => {
 
   const handleRegPress = () => animate("registration");
 
-  const handleVerifyPress = (identifier, purpose = "registration", loginMethod = "phone", email = "") => {
-    setCurrentPhone(loginMethod === 'phone' ? identifier : "");
-    setCurrentEmail(loginMethod === 'email' ? identifier : email);
-    setVerificationPurpose(purpose);
-    setCurrentLoginMethod(loginMethod);
+  const handleVerifyPress = (identifier, purpose = "registration", loginMethodOrEmail = "", email = "") => {
+    if (purpose === 'registration') {
+      // For registration: identifier = phone, loginMethodOrEmail = email
+      setCurrentPhone(identifier);
+      setCurrentEmail(loginMethodOrEmail);
+      setVerificationPurpose(purpose);
+      setCurrentLoginMethod('phone'); // Registration always uses phone
+    } else {
+      // For login: identifier = phone/email, purpose = login, loginMethodOrEmail = loginMethod, email = email (if loginMethod is email)
+      setCurrentPhone(loginMethodOrEmail === 'phone' ? identifier : "");
+      setCurrentEmail(loginMethodOrEmail === 'email' ? identifier : email);
+      setVerificationPurpose(purpose);
+      setCurrentLoginMethod(loginMethodOrEmail);
+    }
     animate("verification");
   };
 

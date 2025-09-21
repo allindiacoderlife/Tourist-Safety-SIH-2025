@@ -35,10 +35,12 @@ const Verification = ({
   }, [timer]);
 
   const handleVerifyOTP = async () => {
-    if (!otp || otp.length !== 6) {
-      Alert.alert("Error", "Please enter a valid 6-digit OTP");
+    if (!otp || otp.length !== 5) {
+      Alert.alert("Error", "Please enter a valid 5-digit OTP");
       return;
     }
+
+    console.log('Verification Debug:', { purpose, phone, email, loginMethod });
 
     if (purpose === 'login' && loginMethod === 'phone' && !phone) {
       Alert.alert("Error", "Phone number is missing");
@@ -51,6 +53,9 @@ const Verification = ({
     }
 
     if (purpose === 'registration' && !phone) {
+      Alert.alert("Error", "Phone number is missing");
+      return;
+    }
       Alert.alert("Error", "Phone number is missing");
       return;
     }
@@ -142,7 +147,7 @@ const Verification = ({
         Enter the 6-digit code sent to {purpose === 'login' && loginMethod === 'email' ? email : phone}
       </Text>
       <OtpInput
-        numberOfDigits={6}
+        numberOfDigits={5}
         focusColor="purple"
         onTextChange={setOtp}
         theme={{

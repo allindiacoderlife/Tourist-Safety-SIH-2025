@@ -4,7 +4,7 @@ export const Config = {
   API: {
     // Change this to your production API URL
     // Using local IP address instead of localhost for React Native compatibility
-    BASE_URL: __DEV__ ? 'http://10.68.145.252:7001/api' : 'https://your-production-api.com/api',
+    BASE_URL: __DEV__ ? 'http://192.168.1.8:7001/api' : 'https://your-production-api.com/api',
     
     // Request timeout in milliseconds
     TIMEOUT: 10000,
