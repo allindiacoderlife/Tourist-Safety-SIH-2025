@@ -116,10 +116,16 @@ const completeRegistration = async (req, res) => {
     // Clear temporary OTP
     delete global.tempOTP;
 
+    // Generate JWT token for the newly registered user
+    const token = user.generateAuthToken();
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      data: user
+      data: {
+        user,
+        token
+      }
     });
   } catch (error) {
     console.error('Error completing registration:', error);

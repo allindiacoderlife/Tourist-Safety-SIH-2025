@@ -18,4 +18,8 @@ module.exports = {
   twilio_account_sid: process.env.TWILIO_ACCOUNT_SID,
   twilio_auth_token: process.env.TWILIO_AUTH_TOKEN,
   twilio_phone_number: process.env.TWILIO_PHONE_NUMBER,
+
+  cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
+  cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,
 };

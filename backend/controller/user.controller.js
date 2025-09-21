@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { uploadImage, deleteImage } = require('../config/cloudinary');
 
 // Create a new user
 const createUser = async (req, res) => {
@@ -249,6 +250,63 @@ const getUserByPhone = async (req, res) => {
   }
 };
 
+// Upload profile picture
+const uploadProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided'
+      });
+    }
+
+    // Upload to Cloudinary
+    const uploadResult = await uploadImage(
+      req.file.buffer,
+      'tourist-safety-profiles',
+      `user-${req.user._id}-${Date.now()}`
+    );
+
+    if (!uploadResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to upload image',
+        error: uploadResult.error
+      });
+    }
+
+    // Update user profile picture
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { profilePicture: uploadResult.url },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile picture uploaded successfully',
+      data: {
+        user,
+        imageUrl: uploadResult.url
+      }
+    });
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error uploading profile picture',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createUser,
   getAllUsers,
@@ -257,5 +315,6 @@ module.exports = {
   deleteUser,
   verifyUser,
   getUserByEmail,
-  getUserByPhone
+  getUserByPhone,
+  uploadProfilePicture
 };

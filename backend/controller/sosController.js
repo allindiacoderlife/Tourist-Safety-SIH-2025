@@ -15,7 +15,7 @@ const sendSOS = async (req, res) => {
     }
 
     // Validate coordinates
-    if (!coordinates.latitude || !coordinates.longitude) {
+    if (!coordinates || !coordinates.latitude || !coordinates.longitude) {
       return res.status(400).json({
         success: false,
         message: 'Valid coordinates (latitude and longitude) are required'
@@ -27,7 +27,10 @@ const sendSOS = async (req, res) => {
       user: req.user._id,
       email: email.toLowerCase().trim(),
       location: location.trim(),
-      coordinates,
+      coordinates: {
+        latitude: parseFloat(coordinates.latitude),
+        longitude: parseFloat(coordinates.longitude)
+      },
       mapsLink: mapsLink.trim(),
       accuracy: parseFloat(accuracy),
       timestamp: new Date()
