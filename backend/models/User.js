@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { jwt_secret, jwt_expire } = require('../config/secret');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -30,24 +33,24 @@ const userSchema = new mongoose.Schema({
       'Please provide a valid phone number'
     ]
   },
-  country: {
+  password: {
     type: String,
-    required: [true, 'Country is required'],
-    trim: true,
-    maxlength: [50, 'Country name cannot exceed 50 characters']
+    required: false, // Made optional for OTP-based registration
+    minLength: [8, 'Password must have at least 8 characters'],
+    maxLength: [32, 'Password cannot have more than 32 characters'],
+    select: false, // Don't include password in queries by default
   },
   isVerified: {
     type: Boolean,
     default: false,
     required: true
-  }
+  },
 }, {
   timestamps: true, // This automatically adds createdAt and updatedAt fields
   collection: 'users'
 });
 
 // Indexes for better performance (only for non-unique fields)
-userSchema.index({ country: 1 });
 userSchema.index({ isVerified: 1 });
 
 // Virtual for ID (if you want to use id instead of _id)
@@ -69,7 +72,40 @@ userSchema.set('toJSON', {
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.__v;
+  delete user.password;
   return user;
+};
+
+// Compare password method (only if password exists)
+userSchema.methods.comparePassword = async function(enteredPassword) {
+  if (!this.password) {
+    return false; // No password set for OTP-only users
+  }
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Generate JWT token
+userSchema.methods.generateAuthToken = function() {
+  return jwt.sign(
+    { 
+      id: this._id,
+      email: this.email,
+      name: this.name
+    },
+    jwt_secret,
+    {
+      expiresIn: jwt_expire || '7d',
+    }
+  );
+};
+
+// Verify JWT token (static method)
+userSchema.statics.verifyAuthToken = function(token) {
+  try {
+    return jwt.verify(token, jwt_secret);
+  } catch (error) {
+    return null;
+  }
 };
 
 // Static methods
@@ -85,12 +121,8 @@ userSchema.statics.findVerifiedUsers = function() {
   return this.find({ isVerified: true });
 };
 
-userSchema.statics.findByCountry = function(country) {
-  return this.find({ country });
-};
-
 // Pre-save middleware
-userSchema.pre('save', function(next) {
+userSchema.pre('save', async function(next) {
   // Convert email to lowercase before saving
   if (this.email) {
     this.email = this.email.toLowerCase();
@@ -99,6 +131,15 @@ userSchema.pre('save', function(next) {
   // Trim whitespace from phone
   if (this.phone) {
     this.phone = this.phone.trim();
+  }
+
+  // Hash password if it's modified and exists
+  if (this.isModified('password') && this.password && this.password.length > 0) {
+    try {
+      this.password = await bcrypt.hash(this.password, 10);
+    } catch (error) {
+      return next(error);
+    }
   }
   
   next();

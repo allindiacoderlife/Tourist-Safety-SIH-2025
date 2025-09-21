@@ -2,16 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 // Import route modules
-const userRoutes = require('./userRoutes');
-const otpRoutes = require('./otpRoutes');
-const authRoutes = require('./authRoutes');
-const sosRoutes = require("./sosRoutes")
+const authRoutes = require('./auth.routes');
 
 // Use routes
-router.use('/users', userRoutes);
-router.use('/otp', otpRoutes);
 router.use('/auth', authRoutes);
-router.use('/sos', sosRoutes);
 
 // Health check route
 router.get('/health', (req, res) => {

@@ -1,44 +1,41 @@
-const { User } = require('../models');
+const User = require('../models/User');
 
 // Create a new user
 const createUser = async (req, res) => {
   try {
-    const { name, email, phone, country } = req.body;
+    const { name, email, phone } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email }, { phone }]
+      $or: [{ email: email.toLowerCase() }, { phone }]
     });
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email or phone already exists'
+        message: 'User already exists with this email or phone number'
       });
     }
 
     // Create new user
     const user = new User({
-      name,
-      email,
-      phone,
-      country,
-      isVerified: false
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.trim()
     });
 
-    const savedUser = await user.save();
+    await user.save();
 
     res.status(201).json({
       success: true,
       message: 'User created successfully',
-      data: savedUser
+      data: user
     });
-
   } catch (error) {
     console.error('Error creating user:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: 'Error creating user',
       error: error.message
     });
   }
@@ -47,38 +44,19 @@ const createUser = async (req, res) => {
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, country, isVerified } = req.query;
-    
-    // Build filter object
-    const filter = {};
-    if (country) filter.country = country;
-    if (isVerified !== undefined) filter.isVerified = isVerified === 'true';
-
-    const users = await User.find(filter)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ createdAt: -1 });
-
-    const total = await User.countDocuments(filter);
+    const users = await User.find({}).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       message: 'Users retrieved successfully',
-      data: users,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        totalUsers: total,
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1
-      }
+      count: users.length,
+      data: users
     });
-
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: 'Error fetching users',
       error: error.message
     });
   }
@@ -88,9 +66,9 @@ const getAllUsers = async (req, res) => {
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const user = await User.findById(id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -103,12 +81,11 @@ const getUserById = async (req, res) => {
       message: 'User retrieved successfully',
       data: user
     });
-
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: 'Error fetching user',
       error: error.message
     });
   }
@@ -121,16 +98,14 @@ const updateUser = async (req, res) => {
     const updates = req.body;
 
     // Remove fields that shouldn't be updated directly
+    delete updates._id;
     delete updates.createdAt;
     delete updates.updatedAt;
 
     const user = await User.findByIdAndUpdate(
       id,
       updates,
-      { 
-        new: true, 
-        runValidators: true 
-      }
+      { new: true, runValidators: true }
     );
 
     if (!user) {
@@ -145,12 +120,11 @@ const updateUser = async (req, res) => {
       message: 'User updated successfully',
       data: user
     });
-
   } catch (error) {
     console.error('Error updating user:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: 'Error updating user',
       error: error.message
     });
   }
@@ -172,21 +146,19 @@ const deleteUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'User deleted successfully',
-      data: user
+      message: 'User deleted successfully'
     });
-
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: 'Error deleting user',
       error: error.message
     });
   }
 };
 
-// Verify user (set isVerified to true)
+// Verify user
 const verifyUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -209,12 +181,11 @@ const verifyUser = async (req, res) => {
       message: 'User verified successfully',
       data: user
     });
-
   } catch (error) {
     console.error('Error verifying user:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: 'Error verifying user',
       error: error.message
     });
   }
@@ -224,9 +195,9 @@ const verifyUser = async (req, res) => {
 const getUserByEmail = async (req, res) => {
   try {
     const { email } = req.params;
-    
+
     const user = await User.findByEmail(email);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -239,12 +210,40 @@ const getUserByEmail = async (req, res) => {
       message: 'User retrieved successfully',
       data: user
     });
-
   } catch (error) {
     console.error('Error fetching user by email:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: 'Error fetching user by email',
+      error: error.message
+    });
+  }
+};
+
+// Get user by phone
+const getUserByPhone = async (req, res) => {
+  try {
+    const { phone } = req.params;
+
+    const user = await User.findByPhone(phone);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'User retrieved successfully',
+      data: user
+    });
+  } catch (error) {
+    console.error('Error fetching user by phone:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching user by phone',
       error: error.message
     });
   }
@@ -257,5 +256,6 @@ module.exports = {
   updateUser,
   deleteUser,
   verifyUser,
-  getUserByEmail
+  getUserByEmail,
+  getUserByPhone
 };
