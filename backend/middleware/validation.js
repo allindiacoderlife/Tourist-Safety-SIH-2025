@@ -1,8 +1,8 @@
-const { User } = require('../models');
+const User = require('../models/User');
 
 // Validation middleware for user creation
 const validateUserCreation = (req, res, next) => {
-  const { name, email, phone, country } = req.body;
+  const { name, email, phone } = req.body;
   const errors = [];
 
   // Required fields validation
@@ -16,10 +16,6 @@ const validateUserCreation = (req, res, next) => {
 
   if (!phone || phone.trim().length === 0) {
     errors.push('Phone number is required');
-  }
-
-  if (!country || country.trim().length === 0) {
-    errors.push('Country is required');
   }
 
   // Format validation
@@ -44,8 +40,13 @@ const validateUserCreation = (req, res, next) => {
     errors.push('Phone number cannot exceed 15 characters');
   }
 
-  if (country && country.length > 50) {
-    errors.push('Country name cannot exceed 50 characters');
+  if (password !== undefined) {
+    if (typeof password !== 'string' || password.trim().length === 0) {
+      errors.push('Password must be a non-empty string');
+    }
+    if (password && (password.length < 8 || password.length > 32)) {
+      errors.push('Password must be between 8 and 32 characters');
+    }
   }
 
   if (errors.length > 0) {
@@ -61,7 +62,7 @@ const validateUserCreation = (req, res, next) => {
 
 // Validation middleware for user update
 const validateUserUpdate = (req, res, next) => {
-  const allowedFields = ['name', 'email', 'phone', 'country', 'isVerified'];
+  const allowedFields = ['name', 'email', 'phone', 'password', 'isVerified'];
   const updates = Object.keys(req.body);
   const errors = [];
 
@@ -72,7 +73,7 @@ const validateUserUpdate = (req, res, next) => {
   }
 
   // Validate individual fields if they exist
-  const { name, email, phone, country } = req.body;
+  const { name, email, phone, password } = req.body;
 
   if (name !== undefined) {
     if (typeof name !== 'string' || name.trim().length === 0) {
@@ -104,15 +105,6 @@ const validateUserUpdate = (req, res, next) => {
     }
     if (phone && phone.length > 15) {
       errors.push('Phone number cannot exceed 15 characters');
-    }
-  }
-
-  if (country !== undefined) {
-    if (typeof country !== 'string' || country.trim().length === 0) {
-      errors.push('Country must be a non-empty string');
-    }
-    if (country && country.length > 50) {
-      errors.push('Country name cannot exceed 50 characters');
     }
   }
 

@@ -7,8 +7,9 @@ const {
   updateUser,
   deleteUser,
   verifyUser,
-  getUserByEmail
-} = require('../controllers/userController');
+  getUserByEmail,
+  getUserByPhone
+} = require('../controller/user.controller');
 
 const {
   validateUserCreation,
@@ -24,5 +25,6 @@ router.put('/:id', validateObjectId, validateUserUpdate, updateUser);  // PUT /a
 router.delete('/:id', validateObjectId, deleteUser);                   // DELETE /api/users/:id
 router.patch('/:id/verify', validateObjectId, verifyUser);             // PATCH /api/users/:id/verify
 router.get('/email/:email', getUserByEmail);                           // GET /api/users/email/:email
+router.get('/phone/:phone', getUserByPhone);                           // GET /api/users/phone/:phone
 
 module.exports = router;
