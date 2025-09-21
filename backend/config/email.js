@@ -197,10 +197,102 @@ const sendPasswordResetOTP = async (to, name, otp) => {
   });
 };
 
+// Send SOS alert notification email
+const sendSOSAlertEmail = async ({ to, userName, location, coordinates, mapsLink, timestamp, accuracy }) => {
+  const subject = '🚨 EMERGENCY SOS ALERT - Tourist Safety';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #e74c3c; color: white; padding: 20px; text-align: center; }
+        .alert-box { background: #ffeaea; border: 3px solid #e74c3c; padding: 20px; margin: 20px 0; border-radius: 10px; }
+        .emergency-text { color: #e74c3c; font-size: 18px; font-weight: bold; text-align: center; }
+        .location-info { background: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #3498db; }
+        .maps-link { display: inline-block; background: #27ae60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .coordinates { font-family: monospace; background: #f8f9fa; padding: 8px; border-radius: 3px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🚨 EMERGENCY ALERT</h1>
+          <h2>Tourist Safety SOS System</h2>
+        </div>
+
+        <div class="alert-box">
+          <div class="emergency-text">
+            ⚠️ CRITICAL EMERGENCY ⚠️<br>
+            SOS Alert Received
+          </div>
+        </div>
+
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0;">
+          <h3 style="color: #2c3e50; margin-top: 0;">Emergency Details:</h3>
+
+          <div class="location-info">
+            <strong>👤 User:</strong> ${userName}<br>
+            <strong>📍 Location:</strong> ${location}<br>
+            <strong>📊 Accuracy:</strong> ±${accuracy} meters<br>
+            <strong>🕒 Time:</strong> ${new Date(timestamp).toLocaleString()}<br>
+            <strong>📌 Coordinates:</strong> <span class="coordinates">${coordinates.latitude}, ${coordinates.longitude}</span>
+          </div>
+
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${mapsLink}" class="maps-link" target="_blank">
+              🗺️ View Location on Google Maps
+            </a>
+          </div>
+
+          <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <strong>🚨 IMMEDIATE ACTION REQUIRED:</strong><br>
+            This is an automated emergency alert. Please respond immediately to assist the person in distress.
+          </div>
+        </div>
+
+        <div class="footer">
+          <p><strong>Tourist Safety Emergency Response System</strong></p>
+          <p>This alert was automatically generated at ${new Date().toLocaleString()}</p>
+          <p>Stay Safe • Travel Smart • Connect Securely</p>
+          <p>&copy; 2025 Tourist Safety. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+EMERGENCY SOS ALERT - Tourist Safety
+
+User: ${userName}
+Location: ${location}
+Coordinates: ${coordinates.latitude}, ${coordinates.longitude}
+Accuracy: ±${accuracy} meters
+Time: ${new Date(timestamp).toLocaleString()}
+Maps Link: ${mapsLink}
+
+IMMEDIATE ACTION REQUIRED: This is an automated emergency alert. Please respond immediately.
+
+Tourist Safety Emergency Response System
+Generated at: ${new Date().toLocaleString()}
+  `.trim();
+
+  return await sendEmail({
+    to,
+    subject,
+    html,
+    text
+  });
+};
+
 module.exports = {
   sendEmail,
   sendRegistrationOTP,
   sendLoginOTP,
   sendPasswordResetOTP,
+  sendSOSAlertEmail,
   createTransporter
 };

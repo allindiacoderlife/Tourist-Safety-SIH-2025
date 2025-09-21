@@ -1,17 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { sendSOS, getAllSOS, getSOS, updateSOSStatus } = require('../controllers/sosController');
+const { sendSOS, getAllSOS, getSOS, updateSOSStatus } = require('../controller/sosController');
+const { protect } = require('../middleware/auth');
 
-// Send SOS alert
-router.post("/send", sendSOS);
+// Send SOS alert (protected route)
+router.post("/send", protect, sendSOS);
 
-// Get all SOS messages with filtering and pagination
-router.get("/", getAllSOS);
+// Get all SOS messages with filtering and pagination (protected route)
+router.get("/", protect, getAllSOS);
 
-// Get single SOS message by ID
-router.get("/:id", getSOS);
+// Get single SOS message by ID (protected route)
+router.get("/:id", protect, getSOS);
 
-// Update SOS status
-router.put("/:id/status", updateSOSStatus);
+// Update SOS status (protected route)
+router.put("/:id/status", protect, updateSOSStatus);
 
 module.exports = router;
