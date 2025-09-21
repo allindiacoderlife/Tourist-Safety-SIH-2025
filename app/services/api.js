@@ -82,7 +82,7 @@ class APIService {
 
 // Authentication API calls
 export class AuthAPI {
-  // Register a new user
+  // Register a new user (sends OTP to email and phone)
   static async register(userData) {
     return APIService.makeRequest(AppConfig.API.ENDPOINTS.AUTH.REGISTER, {
       method: 'POST',
@@ -91,93 +91,105 @@ export class AuthAPI {
   }
   
   // Complete registration after OTP verification
-  static async completeRegistration(phone, otp) {
+  static async completeRegistration(verificationData) {
     return APIService.makeRequest(AppConfig.API.ENDPOINTS.AUTH.COMPLETE_REGISTRATION, {
       method: 'POST',
-      body: { phone, otp },
+      body: verificationData,
     });
   }
   
-  // Login with phone number (first step)
-  static async login(phone) {
+  // Login with phone or email (sends OTP)
+  static async login(loginData) {
     return APIService.makeRequest(AppConfig.API.ENDPOINTS.AUTH.LOGIN, {
       method: 'POST',
-      body: { phone },
+      body: loginData,
     });
   }
   
-  // Verify login OTP (second step)
-  static async verifyLogin(phone, otp) {
-    return APIService.makeRequest(AppConfig.API.ENDPOINTS.AUTH.VERIFY_LOGIN, {
+  // Verify login OTP with email
+  static async verifyLoginEmail(email, otp) {
+    return APIService.makeRequest(AppConfig.API.ENDPOINTS.AUTH.VERIFY_LOGIN_EMAIL, {
+      method: 'POST',
+      body: { email, otp },
+    });
+  }
+  
+  // Verify login OTP with phone
+  static async verifyLoginPhone(phone, otp) {
+    return APIService.makeRequest(AppConfig.API.ENDPOINTS.AUTH.VERIFY_LOGIN_PHONE, {
       method: 'POST',
       body: { phone, otp },
     });
   }
-}
-
-// OTP API calls
-export class OTPAPI {
-  // Send OTP to phone number
-  static async sendOTP(phone, purpose = 'phone_verification') {
-    return APIService.makeRequest(AppConfig.API.ENDPOINTS.OTP.SEND, {
-      method: 'POST',
-      body: { phone, purpose },
-    });
-  }
   
-  // Verify OTP
-  static async verifyOTP(phone, code) {
-    return APIService.makeRequest(AppConfig.API.ENDPOINTS.OTP.VERIFY, {
-      method: 'POST',
-      body: { phone, code },
+  // Get user profile (protected route)
+  static async getProfile(token) {
+    return APIService.makeRequest(AppConfig.API.ENDPOINTS.AUTH.PROFILE, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
 }
 
-// User API calls
+
 export class UserAPI {
   // Get user profile
-  static async getProfile(userId) {
-    return APIService.makeRequest(`/user/${userId}`, {
-      method: 'GET',
-    });
+  static async getProfile(token) {
+    return AuthAPI.getProfile(token);
   }
   
   // Update user profile
-  static async updateProfile(userId, profileData) {
-    return APIService.makeRequest(`/user/${userId}`, {
+  static async updateProfile(userId, profileData, token) {
+    return APIService.makeRequest(`/users/${userId}`, {
       method: 'PUT',
       body: profileData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
   
   // Get user emergency contacts
-  static async getEmergencyContacts(userId) {
-    return APIService.makeRequest(`/user/${userId}/emergency-contacts`, {
+  static async getEmergencyContacts(userId, token) {
+    return APIService.makeRequest(`/users/${userId}/emergency-contacts`, {
       method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
   
   // Add emergency contact
-  static async addEmergencyContact(userId, contactData) {
-    return APIService.makeRequest(`/user/${userId}/emergency-contacts`, {
+  static async addEmergencyContact(userId, contactData, token) {
+    return APIService.makeRequest(`/users/${userId}/emergency-contacts`, {
       method: 'POST',
       body: contactData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
   
   // Update emergency contact
-  static async updateEmergencyContact(userId, contactId, contactData) {
-    return APIService.makeRequest(`/user/${userId}/emergency-contacts/${contactId}`, {
+  static async updateEmergencyContact(userId, contactId, contactData, token) {
+    return APIService.makeRequest(`/users/${userId}/emergency-contacts/${contactId}`, {
       method: 'PUT',
       body: contactData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
   
   // Delete emergency contact
-  static async deleteEmergencyContact(userId, contactId) {
-    return APIService.makeRequest(`/user/${userId}/emergency-contacts/${contactId}`, {
+  static async deleteEmergencyContact(userId, contactId, token) {
+    return APIService.makeRequest(`/users/${userId}/emergency-contacts/${contactId}`, {
       method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
 }
@@ -185,34 +197,48 @@ export class UserAPI {
 // SOS API calls
 export class SOSAPI {
   // Send SOS alert
-  static async sendSOSAlert(sosData) {
-    return APIService.makeRequest('/sos/send', {
+  static async sendSOSAlert(sosData, token) {
+    return APIService.makeRequest(AppConfig.API.ENDPOINTS.SOS.SEND, {
       method: 'POST',
       body: sosData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
   
   // Get SOS history
-  static async getSOSHistory(params = {}) {
+  static async getSOSHistory(token, params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    const endpoint = queryString ? `/sos?${queryString}` : '/sos';
+    const endpoint = queryString ? `${AppConfig.API.ENDPOINTS.SOS.LIST}?${queryString}` : AppConfig.API.ENDPOINTS.SOS.LIST;
     return APIService.makeRequest(endpoint, {
       method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
   
   // Get single SOS by ID
-  static async getSOSById(sosId) {
-    return APIService.makeRequest(`/sos/${sosId}`, {
+  static async getSOSById(sosId, token) {
+    const endpoint = AppConfig.API.ENDPOINTS.SOS.GET_BY_ID.replace(':id', sosId);
+    return APIService.makeRequest(endpoint, {
       method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
   
   // Update SOS status
-  static async updateSOSStatus(sosId, status) {
-    return APIService.makeRequest(`/sos/${sosId}/status`, {
+  static async updateSOSStatus(sosId, status, token) {
+    const endpoint = AppConfig.API.ENDPOINTS.SOS.UPDATE_STATUS.replace(':id', sosId);
+    return APIService.makeRequest(endpoint, {
       method: 'PUT',
       body: { status },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
 }

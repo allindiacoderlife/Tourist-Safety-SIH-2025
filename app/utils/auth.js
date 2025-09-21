@@ -13,7 +13,7 @@ export class AuthFlowUtils {
       const formattedPhone = PhoneUtils.formatPhoneNumber(phone);
       
       // Try to initiate login to check if user exists
-      await AuthAPI.login(formattedPhone);
+      await AuthAPI.login({ phone: formattedPhone });
       
       return {
         exists: true,

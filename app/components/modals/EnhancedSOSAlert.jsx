@@ -35,22 +35,22 @@ const EnhancedSOSAlert = ({ visible, onClose, onSuccess }) => {
       const typeDetails = AppConfig.APP.SOS.EMERGENCY_TYPES.find(t => t.value === selectedType);
       const priorityDetails = AppConfig.APP.SOS.PRIORITY_LEVELS.find(p => p.value === selectedPriority);
       
-      // Prepare enhanced SOS data
+      // Prepare enhanced SOS data according to backend schema
       const sosData = {
         email: userData.email,
-        phone: userData.phone || null,
-        location: {
-          address: locationData.location,
-          latitude: locationData.coordinates?.latitude || null,
-          longitude: locationData.coordinates?.longitude || null
-        },
-        message: `Emergency SOS Alert - ${typeDetails.label} (${priorityDetails.label})`,
-        emergencyType: selectedType,
-        priority: selectedPriority
+        location: `${locationData.location} - ${typeDetails.label} (${priorityDetails.label})`,
+        coordinates: locationData.coordinates,
+        mapsLink: locationData.mapsLink,
+        accuracy: locationData.accuracy || 10
       };
 
       // Send SOS alert
-      const response = await SOSAPI.sendSOSAlert(sosData);
+      const token = await StorageService.getAuthToken();
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+      
+      const response = await SOSAPI.sendSOSAlert(sosData, token);
       
       if (response.success) {
         Alert.alert(
