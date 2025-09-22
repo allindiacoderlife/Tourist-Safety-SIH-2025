@@ -11,8 +11,10 @@ import Registration from "../../components/auth/Registration";
 import Verification from "../../components/auth/Verification";
 import Welcome from "../../components/auth/Welcome";
 import LivePhoto from "../../components/screens/LivePhoto";
+import { useAuth } from "../../context/AuthContext";
 
-const AuthLayout = ({ onAuthSuccess }) => {
+const AuthLayout = () => {
+  const { login } = useAuth();
   const translateY = useSharedValue(0);
   const opacity1 = useSharedValue(1);
   const opacity2 = useSharedValue(0);
@@ -167,7 +169,7 @@ const AuthLayout = ({ onAuthSuccess }) => {
         animatedStyle={loginStyle}
         onBackPress={handleBackPress}
         onRegPress={handleRegPress}
-        onAuthSuccess={onAuthSuccess}
+        onAuthSuccess={login}
         onVerifyPress={handleVerifyPress}
         isVisible={currentScreen === "login"}
       />
@@ -175,14 +177,14 @@ const AuthLayout = ({ onAuthSuccess }) => {
         animatedStyle={regStyle}
         onBackPress={handleContinuePress}
         onVerfiyPress={handleVerifyPress}
-        onAuthSuccess={onAuthSuccess}
+        onAuthSuccess={login}
         isVisible={currentScreen === "registration"}
       />
       <Verification
         animatedStyle={verifyStyle}
         onBackPress={handleRegPress}
         onLivePhotoPress={handleLivePhotoPress}
-        onAuthSuccess={onAuthSuccess}
+        onAuthSuccess={login}
         phone={currentPhone}
         email={currentEmail}
         purpose={verificationPurpose}
@@ -192,7 +194,7 @@ const AuthLayout = ({ onAuthSuccess }) => {
       <LivePhoto
         animatedStyle={livePhotoStyle}
         onBackPress={handleVerifyPress}
-        onAuthSuccess={onAuthSuccess}
+        onAuthSuccess={login}
         isVisible={currentScreen === "livephoto"}
       />
     </View>

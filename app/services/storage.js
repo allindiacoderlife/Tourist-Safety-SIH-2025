@@ -1,9 +1,5 @@
 // Storage utilities for the Tourist Safety App
-// Note: This is a simplified in-memory storage. 
-// For production, install and use @react-native-async-storage/async-storage
-
-// In-memory storage as fallback
-const memoryStorage = {};
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEYS = {
   USER_DATA: '@tourist_safety_user_data',
@@ -18,9 +14,13 @@ export class StorageService {
    */
   static async saveUserData(userData) {
     try {
-      // For now, using in-memory storage
-      // In production, replace with AsyncStorage
-      memoryStorage[STORAGE_KEYS.USER_DATA] = JSON.stringify(userData);
+      if (!userData || typeof userData !== 'object') {
+        console.error('Invalid userData provided to saveUserData:', userData);
+        return false;
+      }
+      
+      const jsonValue = JSON.stringify(userData);
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, jsonValue);
       console.log('User data saved:', userData);
       return true;
     } catch (error) {
@@ -35,7 +35,7 @@ export class StorageService {
    */
   static async getUserData() {
     try {
-      const jsonValue = memoryStorage[STORAGE_KEYS.USER_DATA];
+      const jsonValue = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
       return jsonValue ? JSON.parse(jsonValue) : null;
     } catch (error) {
       console.error('Error getting user data:', error);
@@ -49,7 +49,11 @@ export class StorageService {
    */
   static async saveAuthToken(token) {
     try {
-      memoryStorage[STORAGE_KEYS.AUTH_TOKEN] = token;
+      if (!token || typeof token !== 'string') {
+        console.error('Invalid token provided to saveAuthToken:', token);
+        return false;
+      }
+      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
       return true;
     } catch (error) {
       console.error('Error saving auth token:', error);
@@ -63,7 +67,7 @@ export class StorageService {
    */
   static async getAuthToken() {
     try {
-      return memoryStorage[STORAGE_KEYS.AUTH_TOKEN] || null;
+      return await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || null;
     } catch (error) {
       console.error('Error getting auth token:', error);
       return null;
@@ -76,7 +80,8 @@ export class StorageService {
    */
   static async saveUserPreferences(preferences) {
     try {
-      memoryStorage[STORAGE_KEYS.USER_PREFERENCES] = JSON.stringify(preferences);
+      const jsonValue = JSON.stringify(preferences);
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_PREFERENCES, jsonValue);
       return true;
     } catch (error) {
       console.error('Error saving user preferences:', error);
@@ -90,7 +95,7 @@ export class StorageService {
    */
   static async getUserPreferences() {
     try {
-      const jsonValue = memoryStorage[STORAGE_KEYS.USER_PREFERENCES];
+      const jsonValue = await AsyncStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
       return jsonValue ? JSON.parse(jsonValue) : null;
     } catch (error) {
       console.error('Error getting user preferences:', error);
@@ -103,9 +108,11 @@ export class StorageService {
    */
   static async clearAllData() {
     try {
-      delete memoryStorage[STORAGE_KEYS.USER_DATA];
-      delete memoryStorage[STORAGE_KEYS.AUTH_TOKEN];
-      delete memoryStorage[STORAGE_KEYS.USER_PREFERENCES];
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.USER_DATA,
+        STORAGE_KEYS.AUTH_TOKEN,
+        STORAGE_KEYS.USER_PREFERENCES
+      ]);
       return true;
     } catch (error) {
       console.error('Error clearing data:', error);

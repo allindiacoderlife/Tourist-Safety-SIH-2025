@@ -192,9 +192,58 @@ export class UserAPI {
       },
     });
   }
-}
 
-// SOS API calls
+  // Upload profile picture
+  static async uploadProfilePicture(formData, token) {
+    const url = `${API_BASE_URL}/users/profile-picture`;
+    
+    try {
+      if (AppConfig.DEV.ENABLE_LOGS) {
+        console.log('API Request:', { url, method: 'POST', hasFormData: true });
+      }
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), AppConfig.API.TIMEOUT);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          // Don't set Content-Type for FormData - let browser set it with boundary
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      const data = await response.json();
+      
+      if (AppConfig.DEV.ENABLE_LOGS) {
+        console.log('API Response:', { url, status: response.status, data });
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('API Request failed:', error);
+      
+      // Provide more specific error messages
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out. Please check your internet connection.');
+      } else if (error.message === 'Network request failed') {
+        throw new Error(`Cannot connect to server at ${url}. Please check if the backend server is running.`);
+      } else if (error.message.includes('fetch')) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
+      
+      throw error;
+    }
+  }
+}
 export class SOSAPI {
   // Send SOS alert
   static async sendSOSAlert(sosData, token) {
@@ -203,6 +252,7 @@ export class SOSAPI {
       body: sosData,
       headers: {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
   }
