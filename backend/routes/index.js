@@ -5,10 +5,12 @@ const router = express.Router();
 const authRoutes = require('./auth.routes');
 const userRoutes = require('./user.routes');
 const sosRoutes = require('./sosRoutes');
+const emergencyContactRoutes = require('./emergencyContact.routes');
 // Use routes
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/sos', sosRoutes);
+router.use('/emergency-contacts', emergencyContactRoutes);
 
 // Health check route
 router.get('/health', (req, res) => {
