@@ -1,23 +1,73 @@
 import { Ionicons } from '@expo/vector-icons'
+import { useEffect, useState } from 'react'
 import { Image, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { StorageService } from '../../services/storage'
 
 const Id = () => {
   const insets = useSafeAreaInsets()
+  const [userData, setUserData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // Load user data on component mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const user = await StorageService.getUserData()
+        if (user) {
+          setUserData(user)
+        }
+      } catch (error) {
+        console.error('Failed to load user data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadUserData()
+  }, [])
   
-  // Mock tourist data - this would come from user profile/API
+  // Generate tourist data from real user data
+  const generateTouristID = (email) => {
+    if (!email) return "TID-2024-000"
+    const hash = email.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0)
+      return a & a
+    }, 0)
+    return `TID-2025-${Math.abs(hash).toString().slice(0, 3)}`
+  }
+
+  const getCurrentDate = () => {
+    return new Date().toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    })
+  }
+
+  const getFutureDate = (days) => {
+    const future = new Date()
+    future.setDate(future.getDate() + days)
+    return future.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    })
+  }
+
+  // Generate tourist data based on real user data
   const touristData = {
-    name: "Sarah Johnson",
-    id: "TID-2024-847",
-    photo: null, // Would be actual photo URI
-    arrival: "Dec 15, 2024",
-    departure: "Dec 22, 2024",
-    itinerary: "Cultural Tour - 7 Days",
+    name: userData?.name || "Tourist",
+    id: generateTouristID(userData?.email),
+    photo: userData?.profilePicture || null,
+    arrival: getCurrentDate(),
+    departure: getFutureDate(7),
+    itinerary: "Tourist Visit - 7 Days",
     emergencyContact: {
-      name: "John Johnson",
-      phone: "+1 555-0123"
+      name: userData?.name ? `${userData.name} Contact` : "Emergency Contact",
+      phone: userData?.phone || "+91 112"
     },
-    validUntil: "Dec 22, 2024",
+    validUntil: getFutureDate(7),
     isValid: true
   }
 
@@ -47,7 +97,12 @@ const Id = () => {
         </View>
       </View>
 
-      <View className="flex-1 px-6 py-8">
+      {loading ? (
+        <View className="flex-1 px-6 py-8 items-center justify-center">
+          <Text className="text-gray-500 text-lg">Loading your ID...</Text>
+        </View>
+      ) : (
+        <View className="flex-1 px-6 py-8">
         
         {/* Tourist ID Card */}
         <View 
@@ -79,6 +134,7 @@ const Id = () => {
                 <Image 
                   source={{ uri: touristData.photo }} 
                   className="w-20 h-20 rounded-full"
+                  style={{ width: 80, height: 80, borderRadius: 40 }}
                 />
               ) : (
                 <Ionicons name="person" size={40} color="#3B82F6" />
@@ -89,6 +145,9 @@ const Id = () => {
             <View className="flex-1">
               <Text className="text-white text-2xl font-bold">{touristData.name}</Text>
               <Text className="text-blue-100 text-base font-medium">ID: {touristData.id}</Text>
+              {userData?.email && (
+                <Text className="text-blue-100 text-sm">{userData.email}</Text>
+              )}
             </View>
           </View>
 
@@ -194,6 +253,7 @@ const Id = () => {
         {/* Bottom Spacing */}
         <View className="h-24" />
       </View>
+      )}
     </ScrollView>
   )
 }

@@ -66,6 +66,14 @@ const Verification = ({
         // Complete registration
         const completeResult = await AuthAPI.completeRegistration({ email, phone, otp });
         console.log('Complete registration result:', completeResult);
+        console.log('Registration result structure:', {
+          success: completeResult.success,
+          data: completeResult.data,
+          dataKeys: completeResult.data ? Object.keys(completeResult.data) : 'no data',
+          user: completeResult.data ? completeResult.data.user : 'no user',
+          token: completeResult.data ? completeResult.data.token : 'no token',
+          message: completeResult.message
+        });
         
         if (completeResult.success) {
           // Extract user and token data with fallbacks
@@ -100,6 +108,14 @@ const Verification = ({
           : await AuthAPI.verifyLoginEmail(email, otp);
         
         console.log('Login result:', loginResult);
+        console.log('Login result structure:', {
+          success: loginResult.success,
+          data: loginResult.data,
+          dataKeys: loginResult.data ? Object.keys(loginResult.data) : 'no data',
+          user: loginResult.data ? loginResult.data.user : 'no user',
+          token: loginResult.data ? loginResult.data.token : 'no token',
+          message: loginResult.message
+        });
         
         if (loginResult.success) {
           // Extract user and token data
@@ -122,7 +138,8 @@ const Verification = ({
           await login(userData, token);
           
           Alert.alert("Success", "Login successful!");
-          onAuthSuccess && onAuthSuccess(loginResult.data);
+          // Don't call onAuthSuccess here since login is already completed
+          // onAuthSuccess && onAuthSuccess(loginResult.data);
         } else {
           throw new Error(loginResult.message || 'Login verification failed');
         }

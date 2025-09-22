@@ -293,4 +293,72 @@ export class SOSAPI {
   }
 }
 
+// Emergency Contacts API
+export const EmergencyContactsAPI = {
+  
+  // Get all emergency contacts for current user
+  async getContacts(token) {
+    return APIService.makeRequest('/emergency-contacts', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  },
+  
+  // Add new emergency contact
+  async addContact(contactData, token) {
+    return APIService.makeRequest('/emergency-contacts', {
+      method: 'POST',
+      body: contactData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+  },
+  
+  // Update emergency contact
+  async updateContact(contactId, contactData, token) {
+    return APIService.makeRequest(`/emergency-contacts/${contactId}`, {
+      method: 'PUT',
+      body: contactData,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+  },
+  
+  // Delete emergency contact
+  async deleteContact(contactId, token) {
+    return APIService.makeRequest(`/emergency-contacts/${contactId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  },
+  
+  // Set primary contact
+  async setPrimaryContact(contactId, token) {
+    return APIService.makeRequest(`/emergency-contacts/${contactId}/primary`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  },
+  
+  // Get primary contact
+  async getPrimaryContact(token) {
+    return APIService.makeRequest('/emergency-contacts/primary', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+};
+
 export { APIService };

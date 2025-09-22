@@ -38,21 +38,28 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (userData, token) => {
     try {
-      // Validate inputs
+      console.log('AuthContext login called with:', { userData, token });
+      
+      // Validate inputs with more detailed logging
       if (!userData || typeof userData !== 'object') {
         console.error('Invalid userData provided to login:', userData);
+        console.log('userData type:', typeof userData);
         throw new Error('Invalid user data provided');
       }
       
-      if (!token || typeof token !== 'string') {
+      if (!token || typeof token !== 'string' || token.trim() === '') {
         console.error('Invalid token provided to login:', token);
+        console.log('token type:', typeof token);
+        console.log('token length:', token ? token.length : 0);
         throw new Error('Invalid token provided');
       }
       
+      console.log('Login validation passed, saving data...');
       await StorageService.saveUserData(userData);
       await StorageService.saveAuthToken(token);
       setUser(userData);
       setIsAuthenticated(true);
+      console.log('Login completed successfully');
     } catch (error) {
       console.error('Error during login:', error);
       throw error;

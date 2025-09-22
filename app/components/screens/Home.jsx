@@ -1,11 +1,41 @@
 import { Ionicons } from '@expo/vector-icons'
+import { useEffect, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
+import { StorageService } from '../../services/storage'
 
 const Home = () => {
   const insets = useSafeAreaInsets()
-  const touristName = "Sarah Johnson" // This would come from user data
+  const router = useRouter()
+  const [userData, setUserData] = useState(null)
+  const [loading, setLoading] = useState(true)
   const safetyScore = 85 // This would be calculated based on various factors
+
+  // Load user data on component mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const user = await StorageService.getUserData()
+        if (user) {
+          setUserData(user)
+        }
+      } catch (error) {
+        console.error('Failed to load user data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadUserData()
+  }, [])
+
+  const handleEmergencyContactsPress = () => {
+    // For now, we'll create a placeholder route
+    // In a full implementation, you would navigate to the EmergencyContacts screen
+    console.log('Navigate to Emergency Contacts')
+    // router.push('/emergency-contacts')
+  }
   
   const getSafetyStatus = (score) => {
     if (score >= 80) return { status: 'Safe', color: 'bg-green-500', textColor: 'text-green-700' }
@@ -26,7 +56,9 @@ const Home = () => {
         <View className="flex-row justify-between items-center">
           <View>
             <Text className="text-gray-500 text-sm">Welcome,</Text>
-            <Text className="text-gray-900 text-xl font-bold">{touristName}</Text>
+            <Text className="text-gray-900 text-xl font-bold">
+              {loading ? 'Loading...' : (userData?.name || 'Tourist')}
+            </Text>
           </View>
           <Pressable className="bg-blue-50 p-3 rounded-full">
             <Ionicons name="qr-code-outline" size={24} color="#3B82F6" />
@@ -38,12 +70,11 @@ const Home = () => {
       <View className="flex-1 px-6 py-8">
         
         {/* Panic Button Section */}
-        <View className="items-center mb-12">
+        {/* <View className="items-center mb-12">
           <Text className="text-gray-600 text-base mb-6 text-center">
             Press and hold for 3 seconds to send{'\n'}emergency alert
           </Text>
           
-          {/* Large Panic Button */}
           <Pressable 
             className="bg-red-500 w-48 h-48 rounded-full items-center justify-center shadow-2xl"
             style={{
@@ -60,7 +91,7 @@ const Home = () => {
               <Text className="text-white text-sm opacity-90">Emergency</Text>
             </View>
           </Pressable>
-        </View>
+        </View> */}
 
         {/* Feature Cards Grid */}
         <View className="space-y-4 mb-8">
@@ -72,7 +103,9 @@ const Home = () => {
             </View>
             <View className="flex-1">
               <Text className="text-gray-900 text-lg font-semibold">View Digital ID</Text>
-              <Text className="text-gray-500 text-sm">Tourist ID • 2024 • Valid</Text>
+              <Text className="text-gray-500 text-sm">
+                {userData?.email ? `${userData.email.split('@')[0]} • 2024 • Valid` : 'Tourist ID • 2024 • Valid'}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </Pressable>
@@ -90,7 +123,10 @@ const Home = () => {
           </Pressable>
 
           {/* Emergency Contacts Card */}
-          <Pressable className="bg-white p-6 rounded-2xl shadow-md flex-row items-center">
+          <Pressable 
+            onPress={handleEmergencyContactsPress}
+            className="bg-white p-6 rounded-2xl shadow-md flex-row items-center"
+          >
             <View className="bg-red-50 p-4 rounded-full mr-4">
               <Ionicons name="call-outline" size={28} color="#EF4444" />
             </View>
