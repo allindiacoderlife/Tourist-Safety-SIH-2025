@@ -4,6 +4,7 @@ import { OtpInput } from "react-native-otp-entry";
 import Animated from "react-native-reanimated";
 import { AuthAPI } from "../../services/api";
 import { StorageService } from "../../services/storage";
+import Config from "../../config/app";
 
 const Verification = ({
   animatedStyle,
@@ -19,7 +20,7 @@ const Verification = ({
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(Config.APP.OTP.RESEND_TIMER);
 
   // Countdown timer for resend
   useEffect(() => {
@@ -35,8 +36,8 @@ const Verification = ({
   }, [timer]);
 
   const handleVerifyOTP = async () => {
-    if (!otp || otp.length !== 5) {
-      Alert.alert("Error", "Please enter a valid 5-digit OTP");
+    if (!otp || otp.length !== Config.APP.OTP.LENGTH) {
+      Alert.alert("Error", `Please enter a valid ${Config.APP.OTP.LENGTH}-digit OTP`);
       return;
     }
 
@@ -53,9 +54,6 @@ const Verification = ({
     }
 
     if (purpose === 'registration' && !phone) {
-      Alert.alert("Error", "Phone number is missing");
-      return;
-    }
       Alert.alert("Error", "Phone number is missing");
       return;
     }
@@ -126,7 +124,7 @@ const Verification = ({
       
       if (result.success) {
         Alert.alert("Success", "OTP sent successfully!");
-        setTimer(60); // Reset timer
+        setTimer(Config.APP.OTP.RESEND_TIMER); // Reset timer
         setOtp(""); // Clear previous OTP
       }
     } catch (error) {
@@ -144,10 +142,10 @@ const Verification = ({
     >
       <Text className="title">Verification</Text>
       <Text className="text-gray-600 mb-4">
-        Enter the 6-digit code sent to {purpose === 'login' && loginMethod === 'email' ? email : phone}
+        Enter the {Config.APP.OTP.LENGTH}-digit code sent to {purpose === 'login' && loginMethod === 'email' ? email : phone}
       </Text>
       <OtpInput
-        numberOfDigits={5}
+        numberOfDigits={Config.APP.OTP.LENGTH}
         focusColor="purple"
         onTextChange={setOtp}
         theme={{
