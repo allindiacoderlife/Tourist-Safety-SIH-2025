@@ -1,15 +1,16 @@
 {
   "expo": {
-    "name": "app",
+    "name": "Tourist Safety",
     "slug": "app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "tourist-safety",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.white728.touristsafety"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +18,14 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.white728.app"
+      "package": "com.white728.touristsafety",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "VIBRATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -36,7 +44,13 @@
         }
       ],
       "expo-barcode-scanner",
-      "expo-camera"
+      "expo-camera",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "This app needs access to location for emergency services and safety features."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

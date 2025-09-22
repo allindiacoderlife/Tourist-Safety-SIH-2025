@@ -6,6 +6,7 @@ export const Config = {
     // Using local IP address instead of localhost for React Native compatibility
     // BASE_URL: __DEV__ ? 'http://192.168.1.7:7001/api' : 'https://sih-backend.allindiacoderlife.tech/api',
     BASE_URL: 'https://sih-backend.allindiacoderlife.tech/api',
+    // BASE_URL: 'http://192.168.1.7:7001/api',
     
     // Request timeout in milliseconds
     TIMEOUT: 10000,
@@ -35,6 +36,14 @@ export const Config = {
         LIST: '/sos',
         GET_BY_ID: '/sos/:id',
         UPDATE_STATUS: '/sos/:id/status',
+      },
+      EMERGENCY_CONTACTS: {
+        LIST: '/emergency-contacts',
+        CREATE: '/emergency-contacts',
+        UPDATE: '/emergency-contacts/:id',
+        DELETE: '/emergency-contacts/:id',
+        SET_PRIMARY: '/emergency-contacts/:id/primary',
+        GET_PRIMARY: '/emergency-contacts/primary',
       }
     }
   },
