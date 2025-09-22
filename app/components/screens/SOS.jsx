@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Animated, Linking, Pressable, Text, Vibration, View } from 'react-native'
+import { Alert, Animated, Linking, Pressable, Text, Vibration, View, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AppConfig from '../../config/app'
 import { SOSAPI } from '../../services/api'
@@ -26,7 +26,7 @@ const SOS = () => {
   const [showEnhancedSOS, setShowEnhancedSOS] = useState(false)
 
   // Emergency contacts - will be loaded from user data
-  const [emergencyContacts] = useState({
+  const [emergencyContacts, setEmergencyContacts] = useState({
     police: '112',
     primary: null
   })
@@ -38,12 +38,19 @@ const SOS = () => {
         const userData = await StorageService.getUserData();
         if (userData) {
           setUserEmail(userData.email || '');
-          // TODO: Implement emergency contacts loading
+          // Set primary contact as user's phone if available
+          if (userData.phone) {
+            setEmergencyContacts(prev => ({
+              ...prev,
+              primary: userData.phone
+            }));
+          }
+          // TODO: Implement emergency contacts loading from backend
           // const contacts = await UserAPI.getEmergencyContacts(userData.id);
           // if (contacts.success && contacts.data.length > 0) {
           //   setEmergencyContacts(prev => ({
           //     ...prev,
-          //     primary: contacts.data[0]?.phone || null
+          //     primary: contacts.data[0]?.phone || userData.phone
           //   }));
           // }
         }
@@ -58,7 +65,7 @@ const SOS = () => {
   // Start pulsing animation on component mount
   useEffect(() => {
     const startPulse = () => {
-      Animated.loop(
+      const pulseAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.2,
@@ -71,10 +78,17 @@ const SOS = () => {
             useNativeDriver: true,
           }),
         ])
-      ).start()
+      )
+      pulseAnimation.start()
+      return pulseAnimation
     }
 
-    startPulse()
+    const animation = startPulse()
+    
+    // Cleanup animation on unmount
+    return () => {
+      animation && animation.stop()
+    }
   }, [pulseAnim])
 
   const handleSOSActivation = () => {
@@ -85,13 +99,15 @@ const SOS = () => {
     // Strong vibration feedback - using config pattern
     Vibration.vibrate(AppConfig.APP.SOS.VIBRATION_PATTERN)
     
-    const contacts = emergencyContacts.primary 
-      ? `• Police (112)\n• Primary Contact (${emergencyContacts.primary})\n• Emergency Email (${userEmail})`
-      : `• Police (112)\n• Emergency Email (${userEmail})`
+    // Build contacts list dynamically
+    let contactsList = '• Police (112)\n• Emergency Email (' + userEmail + ')'
+    if (emergencyContacts.primary) {
+      contactsList = '• Police (112)\n• Primary Contact (' + emergencyContacts.primary + ')\n• Emergency Email (' + userEmail + ')'
+    }
     
     Alert.alert(
       '🚨 SOS ACTIVATED',
-      `Emergency alert will be sent to:\n${contacts}\n\nYour current location will be shared.`,
+      `Emergency alert will be sent to:\n${contactsList}\n\nYour current location will be shared.`,
       [
         { text: 'Cancel', style: 'cancel', onPress: () => setDeliveryStatus('Cancelled') },
         { text: 'Send Emergency Alert', onPress: () => sendSOSAlert() }
@@ -216,6 +232,15 @@ const SOS = () => {
     const number = type === 'police' ? emergencyContacts.police : emergencyContacts.primary
     const name = type === 'police' ? 'Police' : 'Primary Contact'
     
+    if (!number) {
+      Alert.alert(
+        'No Contact Available',
+        'Primary contact not set. Please update your profile to add emergency contacts.',
+        [{ text: 'OK' }]
+      )
+      return
+    }
+    
     Alert.alert(
       `Call ${name}`,
       `Calling ${number}`,
@@ -285,7 +310,7 @@ const SOS = () => {
   }
 
   return (
-    <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>
+    <ScrollView className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>
       {/* Header */}
       <View className="px-6 py-4 bg-white shadow-sm">
         <Text className="text-gray-900 text-xl font-bold">Emergency SOS</Text>
@@ -308,7 +333,7 @@ const SOS = () => {
         {/* Main SOS Button */}
         <View className="flex-1 items-center justify-center">
           <View className="relative flex items-center justify-center">
-            {/* Outer pulse ring */}
+            {/* Outer pulse rings */}
             <Animated.View
               className="absolute w-80 h-80 rounded-full bg-red-500 opacity-20"
               style={{
@@ -318,9 +343,8 @@ const SOS = () => {
             
             {/* Inner pulse ring */}
             <Animated.View
+              className="absolute w-72 h-72 rounded-full bg-red-400 opacity-15"
               style={{
-                top: 16,
-                left: 16,
                 transform: [{ scale: pulseAnim }],
               }}
             />
@@ -380,11 +404,15 @@ const SOS = () => {
             {/* Call Primary Contact */}
             <Pressable
               onPress={() => handleQuickCall('primary')}
-              className="flex-1 bg-green-600 rounded-2xl p-4 items-center shadow-lg mx-2"
+              className={`flex-1 rounded-2xl p-4 items-center shadow-lg mx-2 ${
+                emergencyContacts.primary ? 'bg-green-600' : 'bg-gray-400'
+              }`}
             >
               <Ionicons name="call" size={28} color="white" />
               <Text className="text-white font-bold text-lg mt-2">Contact</Text>
-              <Text className="text-green-100 text-sm">Primary</Text>
+              <Text className={`text-xs ${emergencyContacts.primary ? 'text-green-100' : 'text-gray-100'}`}>
+                {emergencyContacts.primary || 'Not Set'}
+              </Text>
             </Pressable>
 
             {/* Share Live Location */}
@@ -430,7 +458,7 @@ const SOS = () => {
         </View>
         
         {/* Vibration indicator */}
-        <View className="flex-row items-center mt-3 pt-3 border-t border-gray-100">
+        <View className="flex-row items-center mt-3 mb-24 pt-3 border-t border-gray-100">
           <Ionicons name="phone-portrait" size={16} color="#6B7280" />
           <Text className="text-gray-500 text-xs ml-2">
             Vibration feedback enabled • Works offline
@@ -447,7 +475,7 @@ const SOS = () => {
           setDeliveryStatus('Alert Sent');
         }}
       />
-    </View>
+    </ScrollView>
   )
 }
 

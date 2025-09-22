@@ -4,7 +4,8 @@ export const Config = {
   API: {
     // Change this to your production API URL
     // Using local IP address instead of localhost for React Native compatibility
-    BASE_URL: __DEV__ ? 'http://192.168.1.7:7001/api' : 'https://your-production-api.com/api',
+    // BASE_URL: __DEV__ ? 'http://192.168.1.7:7001/api' : 'https://sih-backend.allindiacoderlife.tech/api',
+    BASE_URL: 'https://sih-backend.allindiacoderlife.tech/api',
     
     // Request timeout in milliseconds
     TIMEOUT: 10000,
@@ -87,7 +88,7 @@ export const Config = {
 
   // Development settings
   DEV: {
-    ENABLE_LOGS: __DEV__,
+    ENABLE_LOGS: true, // Temporarily force enable for debugging deployed backend
     MOCK_API: false, // Set to true to use mock responses
   }
 };
