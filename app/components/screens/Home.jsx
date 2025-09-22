@@ -31,10 +31,9 @@ const Home = () => {
   }, [])
 
   const handleEmergencyContactsPress = () => {
-    // For now, we'll create a placeholder route
-    // In a full implementation, you would navigate to the EmergencyContacts screen
+    // Navigate to Emergency Contacts screen using Expo Router
     console.log('Navigate to Emergency Contacts')
-    // router.push('/emergency-contacts')
+    router.push('/emergency-contacts')
   }
   
   const getSafetyStatus = (score) => {
@@ -132,9 +131,18 @@ const Home = () => {
             </View>
             <View className="flex-1">
               <Text className="text-gray-900 text-lg font-semibold">Emergency Contacts</Text>
-              <Text className="text-gray-500 text-sm">Quick access to help</Text>
+              <Text className="text-gray-500 text-sm">Manage your emergency contacts</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </Pressable>
+
+          {/* Quick Manage Contacts Button */}
+          <Pressable 
+            onPress={handleEmergencyContactsPress}
+            className="bg-red-500 p-4 rounded-2xl shadow-md flex-row items-center justify-center"
+          >
+            <Ionicons name="people" size={24} color="white" />
+            <Text className="text-white text-lg font-semibold ml-3">Manage Emergency Contacts</Text>
           </Pressable>
         </View>
 
