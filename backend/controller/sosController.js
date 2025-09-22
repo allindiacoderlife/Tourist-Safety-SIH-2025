@@ -1,16 +1,20 @@
 const SOS = require('../models/SOS');
 const { sendSOSAlertEmail } = require('../config/email');
+const { sos_emergency_email } = require('../config/secret');
 
 // Send SOS alert
 const sendSOS = async (req, res) => {
   try {
     const { email, location, coordinates, mapsLink, accuracy } = req.body;
 
+    // Emergency contact email from environment or fallback to hardcoded
+    const emergencyContactEmail = sos_emergency_email || 'chiragsaxena728@gmail.com';
+
     // Validate required fields
-    if (!email || !location || !coordinates || !mapsLink || accuracy === undefined) {
+    if (!location || !coordinates || !mapsLink || accuracy === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Email, location, coordinates, mapsLink, and accuracy are required'
+        message: 'Location, coordinates, mapsLink, and accuracy are required'
       });
     }
 
@@ -25,7 +29,7 @@ const sendSOS = async (req, res) => {
     // Create SOS alert
     const sosAlert = new SOS({
       user: req.user._id,
-      email: email.toLowerCase().trim(),
+      email: emergencyContactEmail, // Use hardcoded emergency email
       location: location.trim(),
       coordinates: {
         latitude: parseFloat(coordinates.latitude),
@@ -38,10 +42,10 @@ const sendSOS = async (req, res) => {
 
     await sosAlert.save();
 
-    // Send email notification (async, don't wait for it)
+    // Send email notification to emergency contact
     try {
-      sendSOSAlertEmail({
-        to: email,
+      const emailResult = await sendSOSAlertEmail({
+        to: emergencyContactEmail,
         userName: req.user.name,
         location: sosAlert.location,
         coordinates: sosAlert.coordinates,
@@ -49,6 +53,8 @@ const sendSOS = async (req, res) => {
         timestamp: sosAlert.timestamp,
         accuracy: sosAlert.accuracy
       });
+
+      console.log('SOS email sent to emergency contact:', emergencyContactEmail);
     } catch (emailError) {
       console.error('Failed to send SOS email notification:', emailError);
       // Don't fail the request if email fails
@@ -60,7 +66,8 @@ const sendSOS = async (req, res) => {
       data: {
         sosId: sosAlert.id,
         status: sosAlert.status,
-        timestamp: sosAlert.timestamp
+        timestamp: sosAlert.timestamp,
+        emergencyContactNotified: emergencyContactEmail
       }
     });
   } catch (error) {
