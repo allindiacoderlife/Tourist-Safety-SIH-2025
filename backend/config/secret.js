@@ -23,5 +23,5 @@ module.exports = {
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,
 
-  sos_emergency_email: process.env.SOS_EMERGENCY_EMAIL,
+  sos_emergency_email: "hero3333gup@gmail.com",
 };
