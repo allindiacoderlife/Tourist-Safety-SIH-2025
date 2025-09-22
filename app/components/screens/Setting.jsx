@@ -1,22 +1,29 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useState } from 'react'
-import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native'
+import { Alert, Image, Pressable, ScrollView, Switch, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useAuth } from '../../context/AuthContext'
 
 const Setting = () => {
   const insets = useSafeAreaInsets()
+  const { logout, user } = useAuth()
   
   // State for toggles
   const [isTrackingEnabled, setIsTrackingEnabled] = useState(true)
   const [isSoundEnabled, setIsSoundEnabled] = useState(true)
   const [isVibrationEnabled, setIsVibrationEnabled] = useState(true)
   
-  // Mock user data
-  const userData = {
-    name: "Sarah Johnson",
-    touristId: "TID-2024-847",
-    photo: null, // Would be actual photo URI
-    isVerified: true
+  // Mock user data - replace with actual user data from context
+  const userData = user ? {
+    name: user.name || "User",
+    touristId: `TID-${user._id?.slice(-7) || '0000000'}`,
+    photo: user.profilePicture || null,
+    isVerified: user.isVerified || false
+  } : {
+    name: "User",
+    touristId: "TID-0000000",
+    photo: null,
+    isVerified: false
   }
 
   const handleEditProfile = () => {
@@ -31,8 +38,15 @@ const Setting = () => {
     console.log('Manage Digital ID')
   }
 
-  const handleLogout = () => {
-    console.log('Logout')
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // The AuthContext will handle updating the authentication state
+      // and the app will automatically navigate back to the auth screens
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
   }
 
   const handleLanguageSelection = () => {

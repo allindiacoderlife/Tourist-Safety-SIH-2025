@@ -4,7 +4,8 @@ import { OtpInput } from "react-native-otp-entry";
 import Animated from "react-native-reanimated";
 import { AuthAPI } from "../../services/api";
 import { StorageService } from "../../services/storage";
-import Config from "../../config/app";
+import AppConfig from "../../config/app";
+import { useAuth } from "../../context/AuthContext";
 
 const Verification = ({
   animatedStyle,
@@ -17,10 +18,11 @@ const Verification = ({
   email, // for registration
   loginMethod = 'phone', // 'phone' or 'email' for login
 }) => {
+  const { login } = useAuth();
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [timer, setTimer] = useState(Config.APP.OTP.RESEND_TIMER);
+  const [timer, setTimer] = useState(AppConfig.APP.OTP.RESEND_TIMER);
 
   // Countdown timer for resend
   useEffect(() => {
@@ -36,8 +38,8 @@ const Verification = ({
   }, [timer]);
 
   const handleVerifyOTP = async () => {
-    if (!otp || otp.length !== Config.APP.OTP.LENGTH) {
-      Alert.alert("Error", `Please enter a valid ${Config.APP.OTP.LENGTH}-digit OTP`);
+    if (!otp || otp.length !== AppConfig.APP.OTP.LENGTH) {
+      Alert.alert("Error", `Please enter a valid ${AppConfig.APP.OTP.LENGTH}-digit OTP`);
       return;
     }
 
@@ -63,13 +65,33 @@ const Verification = ({
       if (purpose === 'registration') {
         // Complete registration
         const completeResult = await AuthAPI.completeRegistration({ email, phone, otp });
+        console.log('Complete registration result:', completeResult);
+        
         if (completeResult.success) {
+          // Extract user and token data with fallbacks
+          const userData = completeResult.data.user || completeResult.data;
+          const token = completeResult.data.token;
+          
+          console.log('Extracted userData:', userData);
+          console.log('Extracted token:', token);
+          
+          // Validate data before saving
+          if (!userData) {
+            throw new Error('No user data received from registration');
+          }
+          
+          if (!token) {
+            throw new Error('No authentication token received from registration');
+          }
+          
           // Save user data to storage
-          await StorageService.saveUserData(completeResult.data.user || completeResult.data);
-          await StorageService.saveAuthToken(completeResult.data.token);
+          await StorageService.saveUserData(userData);
+          await StorageService.saveAuthToken(token);
           
           Alert.alert("Success", "Registration completed successfully!");
           onLivePhotoPress && onLivePhotoPress();
+        } else {
+          throw new Error(completeResult.message || 'Registration completion failed');
         }
       } else if (purpose === 'login') {
         // Complete login
@@ -77,13 +99,32 @@ const Verification = ({
           ? await AuthAPI.verifyLoginPhone(phone, otp)
           : await AuthAPI.verifyLoginEmail(email, otp);
         
+        console.log('Login result:', loginResult);
+        
         if (loginResult.success) {
-          // Save user data to storage
-          await StorageService.saveUserData(loginResult.data.user);
-          await StorageService.saveAuthToken(loginResult.data.token);
+          // Extract user and token data
+          const userData = loginResult.data.user;
+          const token = loginResult.data.token;
+          
+          console.log('Login userData:', userData);
+          console.log('Login token:', token);
+          
+          // Validate data before calling login
+          if (!userData) {
+            throw new Error('No user data received from login');
+          }
+          
+          if (!token) {
+            throw new Error('No authentication token received from login');
+          }
+          
+          // Use AuthContext login function
+          await login(userData, token);
           
           Alert.alert("Success", "Login successful!");
           onAuthSuccess && onAuthSuccess(loginResult.data);
+        } else {
+          throw new Error(loginResult.message || 'Login verification failed');
         }
       }
     } catch (error) {
@@ -124,7 +165,7 @@ const Verification = ({
       
       if (result.success) {
         Alert.alert("Success", "OTP sent successfully!");
-        setTimer(Config.APP.OTP.RESEND_TIMER); // Reset timer
+        setTimer(AppConfig.APP.OTP.RESEND_TIMER); // Reset timer
         setOtp(""); // Clear previous OTP
       }
     } catch (error) {
@@ -142,10 +183,10 @@ const Verification = ({
     >
       <Text className="title">Verification</Text>
       <Text className="text-gray-600 mb-4">
-        Enter the {Config.APP.OTP.LENGTH}-digit code sent to {purpose === 'login' && loginMethod === 'email' ? email : phone}
+        Enter the {AppConfig.APP.OTP.LENGTH}-digit code sent to {purpose === 'login' && loginMethod === 'email' ? email : phone}
       </Text>
       <OtpInput
-        numberOfDigits={Config.APP.OTP.LENGTH}
+        numberOfDigits={AppConfig.APP.OTP.LENGTH}
         focusColor="purple"
         onTextChange={setOtp}
         theme={{

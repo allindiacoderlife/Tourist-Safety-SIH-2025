@@ -1,22 +1,11 @@
 import { Stack } from "expo-router";
-import { useState, useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../styles/global.css";
 import AuthLayout from "./(auth)/_layout";
-import { StorageService } from "../services/storage";
+import { AuthProvider, useAuth } from "../context/AuthContext";
 
-export default function RootLayout() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const authenticated = await StorageService.isAuthenticated();
-      setIsAuthenticated(authenticated);
-      setIsLoading(false);
-    };
-    checkAuth();
-  }, []);
+function AppContent() {
+  const { isAuthenticated, isLoading, login } = useAuth();
 
   if (isLoading) {
     return null; // Or a loading screen
@@ -25,7 +14,7 @@ export default function RootLayout() {
   if (!isAuthenticated) {
     return (
       <SafeAreaProvider>
-        <AuthLayout onAuthSuccess={() => setIsAuthenticated(true)} />
+        <AuthLayout />
       </SafeAreaProvider>
     );
   }
@@ -36,5 +25,13 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
       </Stack>
     </SafeAreaProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

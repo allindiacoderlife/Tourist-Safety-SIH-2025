@@ -2,11 +2,16 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useRef, useState } from 'react';
 import { Alert, Image, Pressable, Text, View } from 'react-native';
 import Animated from "react-native-reanimated";
+import { UserAPI } from '../../services/api';
+import { StorageService } from '../../services/storage';
+import { useAuth } from '../../context/AuthContext';
 
 const LivePhoto = ({ animatedStyle, onBackPress, onAuthSuccess, isVisible }) => {
+  const { login } = useAuth();
   const [facing, setFacing] = useState('front');
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const cameraRef = useRef(null);
 
   if (!permission) {
@@ -67,6 +72,82 @@ const LivePhoto = ({ animatedStyle, onBackPress, onAuthSuccess, isVisible }) => 
       } catch (_error) {
         Alert.alert('Error', 'Failed to take picture. Please try again.');
       }
+    }
+  };
+
+  const uploadProfilePicture = async () => {
+    if (!capturedImage) {
+      Alert.alert('Error', 'No image to upload');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Create form data
+      const formData = new FormData();
+      formData.append('profilePicture', {
+        uri: capturedImage,
+        type: 'image/jpeg',
+        name: 'profile.jpg',
+      });
+
+      // Get auth token
+      const token = await StorageService.getAuthToken();
+      if (!token) {
+        Alert.alert('Error', 'Authentication token not found');
+        return;
+      }
+
+      // Upload to backend
+      const uploadResult = await UserAPI.uploadProfilePicture(formData, token);
+
+      if (uploadResult.success) {
+        Alert.alert('Success', 'Profile picture uploaded successfully!');
+        
+        // Update the stored user data with the new profile picture
+        const currentUserData = await StorageService.getUserData();
+        const token = await StorageService.getAuthToken();
+        
+        console.log('LivePhoto - currentUserData:', currentUserData);
+        console.log('LivePhoto - token:', token);
+        console.log('LivePhoto - uploadResult.data:', uploadResult.data);
+        
+        if (currentUserData && uploadResult.data && uploadResult.data.user) {
+          // Merge current user data with the updated profile picture
+          const updatedUserData = {
+            ...currentUserData,
+            profilePicture: uploadResult.data.user.profilePicture
+          };
+          
+          console.log('LivePhoto - updatedUserData:', updatedUserData);
+          
+          // Save the updated user data
+          const saveSuccess = await StorageService.saveUserData(updatedUserData);
+          
+          if (saveSuccess && token) {
+            console.log('LivePhoto - calling login with:', updatedUserData, token);
+            await login(updatedUserData, token);
+          } else if (!token) {
+            console.error('LivePhoto - No token available for login');
+          }
+        } else {
+          console.warn('LivePhoto - Missing data for user update:', {
+            currentUserData: !!currentUserData,
+            uploadResultData: !!uploadResult.data,
+            uploadResultUser: !!(uploadResult.data && uploadResult.data.user)
+          });
+        }
+        
+        // Call onAuthSuccess without arguments since login was already called
+        onAuthSuccess && onAuthSuccess();
+      } else {
+        Alert.alert('Upload Failed', uploadResult.message || 'Failed to upload profile picture');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      Alert.alert('Error', 'Failed to upload profile picture. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -134,9 +215,12 @@ const LivePhoto = ({ animatedStyle, onBackPress, onAuthSuccess, isVisible }) => 
               </Pressable>
               <Pressable 
                 className="btn bg-purple-400 flex-1"
-                onPress={onAuthSuccess}
+                onPress={uploadProfilePicture}
+                disabled={uploading}
               >
-                <Text className="text-white font-bold text-lg">Continue</Text>
+                <Text className="text-white font-bold text-lg">
+                  {uploading ? 'Uploading...' : 'Continue'}
+                </Text>
               </Pressable>
             </View>
           </View>

@@ -45,7 +45,7 @@ export const Config = {
 
     // OTP Configuration
     OTP: {
-      LENGTH: 6,
+      LENGTH: 5,
       RESEND_TIMER: 60, // seconds
     },
 
