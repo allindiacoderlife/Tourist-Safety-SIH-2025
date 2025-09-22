@@ -46,7 +46,7 @@ const Home = () => {
 
   return (
     <ScrollView 
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-gray-50 gap-4"
       style={{ paddingTop: insets.top }}
       showsVerticalScrollIndicator={false}
     >
@@ -93,7 +93,7 @@ const Home = () => {
         </View> */}
 
         {/* Feature Cards Grid */}
-        <View className="space-y-4 mb-8">
+        <View className="space-y-4 mb-8 gap-4">
           
           {/* Digital ID Card */}
           <Pressable className="bg-white p-6 rounded-2xl shadow-md flex-row items-center">

@@ -1,4 +1,4 @@
-import { Pressable, Text, View, Alert } from "react-native";
+import { Pressable, Text, View, Alert, ScrollView, Keyboard } from "react-native";
 import { useState, useEffect } from "react";
 import { OtpInput } from "react-native-otp-entry";
 import Animated from "react-native-reanimated";
@@ -23,6 +23,25 @@ const Verification = ({
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [timer, setTimer] = useState(AppConfig.APP.OTP.RESEND_TIMER);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Keyboard listener
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      setIsKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+      setIsKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription?.remove();
+      hideSubscription?.remove();
+    };
+  }, []);
 
   // Countdown timer for resend
   useEffect(() => {
@@ -194,41 +213,61 @@ const Verification = ({
   };
   return (
     <Animated.View
-      className="absolute w-full h-[55%] bottom-0 p-[20px] gap-4"
-      style={animatedStyle}
+      className="absolute w-full bottom-0"
+      style={[animatedStyle, { 
+        height: keyboardHeight > 0 ? '80%' : '55%',
+        paddingBottom: keyboardHeight > 0 ? keyboardHeight / 4 : 0 
+      }]}
       pointerEvents={isVisible ? "auto" : "none"}
     >
-      <Text className="title">Verification</Text>
-      <Text className="text-gray-600 mb-4">
-        Enter the {AppConfig.APP.OTP.LENGTH}-digit code sent to {purpose === 'login' && loginMethod === 'email' ? email : phone}
-      </Text>
-      <OtpInput
-        numberOfDigits={AppConfig.APP.OTP.LENGTH}
-        focusColor="purple"
-        onTextChange={setOtp}
-        theme={{
-          containerStyle: { marginBottom: 20 },
-        }}
-      />
-      <View className="w-full flex-row justify-end mt-4 mb-8">
-        <Pressable onPress={handleResendOTP} disabled={timer > 0 || resendLoading}>
-          <Text className={`font-bold ${timer > 0 ? 'text-gray-400' : 'text-purple-400'}`}>
-            {timer > 0 ? `Resend in ${timer}s` : resendLoading ? 'Sending...' : 'Resend OTP'}
-          </Text>
-        </Pressable>
+      <View className={`flex-1 rounded-t-3xl ${isKeyboardVisible ? 'bg-white' : ''} `}>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+        >
+          <View className="flex-1 p-5 justify-between min-h-full">
+            <View className="gap-4">
+              <Text className="title">Verification</Text>
+              <Text className="text-gray-600 mb-4">
+                Enter the {AppConfig.APP.OTP.LENGTH}-digit code sent to {purpose === 'login' && loginMethod === 'email' ? email : phone}
+              </Text>
+              <OtpInput
+                numberOfDigits={AppConfig.APP.OTP.LENGTH}
+                focusColor="purple"
+                onTextChange={setOtp}
+                theme={{
+                  containerStyle: { marginBottom: 20 },
+                }}
+              />
+              <View className="w-full flex-row justify-end mt-4 mb-8">
+                <Pressable onPress={handleResendOTP} disabled={timer > 0 || resendLoading}>
+                  <Text className={`font-bold ${timer > 0 ? 'text-gray-400' : 'text-purple-400'}`}>
+                    {timer > 0 ? `Resend in ${timer}s` : resendLoading ? 'Sending...' : 'Resend OTP'}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+            
+            <View className={`w-full gap-4 pt-8 pb-4 ${ isKeyboardVisible ? 'mb-[60%]' : '' }`}>
+              <Pressable 
+                className={`btn ${loading ? 'bg-gray-400' : 'bg-purple-400'}`} 
+                onPress={handleVerifyOTP}
+                disabled={loading}
+              >
+                <Text className="text-white font-bold">
+                  {loading ? 'Verifying...' : 'Submit'}
+                </Text>
+              </Pressable>
+              <Pressable className="btn bg-gray-300" onPress={onBackPress}>
+                <Text className="text-white font-bold">Back</Text>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
       </View>
-      <Pressable 
-        className={`btn ${loading ? 'bg-gray-400' : 'bg-purple-400'}`} 
-        onPress={handleVerifyOTP}
-        disabled={loading}
-      >
-        <Text className="text-white font-bold">
-          {loading ? 'Verifying...' : 'Submit'}
-        </Text>
-      </Pressable>
-      <Pressable className="btn bg-gray-300" onPress={onBackPress}>
-        <Text className="text-white font-bold">Back</Text>
-      </Pressable>
     </Animated.View>
   );
 };

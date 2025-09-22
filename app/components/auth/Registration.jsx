@@ -1,5 +1,5 @@
-import { Pressable, Text, TextInput, View, Alert } from "react-native";
-import { useState } from "react";
+import { Pressable, Text, TextInput, View, Alert, ScrollView, Keyboard } from "react-native";
+import { useState, useEffect } from "react";
 import Animated from "react-native-reanimated";
 import { AuthAPI } from "../../services/api";
 import { PhoneUtils } from "../../utils/phone";
@@ -18,6 +18,24 @@ const Registration = ({
     country: "India",
   });
   const [loading, setLoading] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      setIsKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+      setIsKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription?.remove();
+      hideSubscription?.remove();
+    };
+  }, []);
 
   const updateFormData = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -112,54 +130,72 @@ const Registration = ({
 
   return (
     <Animated.View
-      className="absolute w-full h-[65%] bottom-0 p-[20px] gap-4"
-      style={animatedStyle}
+      className="absolute w-full bottom-0"
+      style={[animatedStyle, { 
+        height: keyboardHeight > 0 ? '80%' : '65%',
+        paddingBottom: keyboardHeight > 0 ? keyboardHeight / 4 : 0 
+      }]}
       pointerEvents={isVisible ? "auto" : "none"}
     >
-      <Text className="title">Registration</Text>
-      <Text className="label">Full Name</Text>
-      <TextInput
-        className="input"
-        placeholder="Enter Full Name"
-        value={formData.name}
-        onChangeText={(value) => updateFormData("name", value)}
-        editable={!loading}
-      />
-      <Text className="label">Mobile No</Text>
-      <TextInput
-        className="input"
-        placeholder="Enter Mobile Number"
-        value={formData.phone}
-        onChangeText={(value) => updateFormData("phone", value)}
-        keyboardType="phone-pad"
-        editable={!loading}
-      />
-      <Text className="label">Email</Text>
-      <TextInput
-        className="input"
-        placeholder="Enter Email"
-        value={formData.email}
-        onChangeText={(value) => updateFormData("email", value)}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        editable={!loading}
-      />
-      <View className="w-full flex-row justify-end mb-8">
-        <Text className="text-purple-400 font-bold">Forgot Password ?</Text>
-      </View>
-      <View className="w-full gap-4 absolute bottom-10 left-[5%]">
-        <Pressable
-          className={`btn ${loading ? "bg-gray-400" : "bg-purple-400"}`}
-          onPress={handleRegister}
-          disabled={loading}
+      <View className={`flex-1 rounded-t-3xl ${isKeyboardVisible ? 'bg-white' : ''} `}>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
         >
-          <Text className="text-white font-bold">
-            {loading ? "Creating Account..." : "Create New Account"}
-          </Text>
-        </Pressable>
-        <Pressable className="btn bg-gray-300" onPress={onBackPress}>
-          <Text className="text-white font-bold">Back</Text>
-        </Pressable>
+          <View className="flex-1 p-5 justify-between min-h-full">
+            <View className="gap-4">
+              <Text className="title">Registration</Text>
+              <Text className="label">Full Name</Text>
+              <TextInput
+                className="input"
+                placeholder="Enter Full Name"
+                value={formData.name}
+                onChangeText={(value) => updateFormData("name", value)}
+                editable={!loading}
+              />
+              <Text className="label">Mobile No</Text>
+              <TextInput
+                className="input"
+                placeholder="Enter Mobile Number"
+                value={formData.phone}
+                onChangeText={(value) => updateFormData("phone", value)}
+                keyboardType="phone-pad"
+                editable={!loading}
+              />
+              <Text className="label">Email</Text>
+              <TextInput
+                className="input"
+                placeholder="Enter Email"
+                value={formData.email}
+                onChangeText={(value) => updateFormData("email", value)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+              />
+              <View className="w-full flex-row justify-end mb-8">
+                <Text className="text-purple-400 font-bold">Forgot Password ?</Text>
+              </View>
+            </View>
+            
+            <View className={`w-full gap-4 pt-8 pb-4 ${ isKeyboardVisible ? 'mb-[60%]' : '' }`}>
+              <Pressable
+                className={`btn ${loading ? "bg-gray-400" : "bg-purple-400"}`}
+                onPress={handleRegister}
+                disabled={loading}
+              >
+                <Text className="text-white font-bold">
+                  {loading ? "Creating Account..." : "Create New Account"}
+                </Text>
+              </Pressable>
+              <Pressable className="btn bg-gray-300" onPress={onBackPress}>
+                <Text className="text-white font-bold">Back</Text>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
       </View>
     </Animated.View>
   );

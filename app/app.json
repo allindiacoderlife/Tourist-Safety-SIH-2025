@@ -43,7 +43,6 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-barcode-scanner",
       "expo-camera",
       [
         "expo-location",
