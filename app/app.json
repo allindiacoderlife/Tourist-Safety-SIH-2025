@@ -49,7 +49,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "This app needs access to location for emergency services and safety features."
         }
-      ]
+      ],
+      "expo-maps"
     ],
     "experiments": {
       "typedRoutes": true

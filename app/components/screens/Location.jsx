@@ -2,12 +2,14 @@ import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Animated, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import MapView, { Circle, Marker } from 'react-native-maps'
 
 const LocationScr = () => {
   const insets = useSafeAreaInsets()
   const slideAnim = useRef(new Animated.Value(150)).current
   const warningAnim = useRef(new Animated.Value(-100)).current
   const fabRotation = useRef(new Animated.Value(0)).current
+  const mapRef = useRef(null)
   
   // State management
   const [location, setLocation] = useState(null)
@@ -112,6 +114,18 @@ const LocationScr = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Update map region when location changes
+  useEffect(() => {
+    if (location && mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }, 1000)
+    }
+  }, [location])
+
   const showWarningAlert = () => {
     setShowWarning(true)
     Animated.timing(warningAnim, {
@@ -179,6 +193,35 @@ const LocationScr = () => {
     }).start()
   }
 
+  const handleZoomIn = () => {
+    if (mapRef.current) {
+      mapRef.current.getCamera().then(camera => {
+        camera.zoom += 1
+        mapRef.current.animateCamera(camera, { duration: 500 })
+      })
+    }
+  }
+
+  const handleZoomOut = () => {
+    if (mapRef.current) {
+      mapRef.current.getCamera().then(camera => {
+        camera.zoom -= 1
+        mapRef.current.animateCamera(camera, { duration: 500 })
+      })
+    }
+  }
+
+  const centerToUserLocation = () => {
+    if (mapRef.current && location) {
+      mapRef.current.animateToRegion({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }, 1000)
+    }
+  }
+
   const getSafetyStatusColor = () => {
     return safetyStatus === 'Safe Zone' ? 'bg-green-500' : 'bg-red-500'
   }
@@ -203,84 +246,109 @@ const LocationScr = () => {
         className="flex-1 relative"
         style={{ paddingTop: insets.top }}
       >
-        {/* Realistic Map Background */}
-        <View className="absolute inset-0">
-          {/* Map tiles background */}
-          <View className="flex-1 bg-yellow-50">
-            {/* Street pattern overlay */}
-            <View className="absolute inset-0">
-              {/* Horizontal streets */}
-              <View className="absolute top-1/4 left-0 right-0 h-1 bg-gray-300" />
-              <View className="absolute top-2/4 left-0 right-0 h-1.5 bg-gray-400" />
-              <View className="absolute top-3/4 left-0 right-0 h-1 bg-gray-300" />
-              
-              {/* Vertical streets */}
-              <View className="absolute left-1/4 top-0 bottom-0 w-1 bg-gray-300" />
-              <View className="absolute left-2/4 top-0 bottom-0 w-1.5 bg-gray-400" />
-              <View className="absolute left-3/4 top-0 bottom-0 w-1 bg-gray-300" />
-              
-              {/* River/water body */}
-              <View className="absolute right-0 top-0 bottom-0 w-16 bg-blue-200" />
-              
-              {/* Buildings */}
-              <View className="absolute top-1/5 left-1/5 w-8 h-6 bg-gray-200 rounded-sm" />
-              <View className="absolute top-2/5 left-1/3 w-6 h-8 bg-gray-300 rounded-sm" />
-              <View className="absolute top-3/5 left-2/5 w-10 h-4 bg-gray-200 rounded-sm" />
-              <View className="absolute top-1/3 right-20 w-7 h-10 bg-gray-300 rounded-sm" />
-            </View>
-          </View>
-          
-          {/* Safe Zones */}
-          {safeZones.map((zone, index) => (
-            <View
-              key={zone.id}
-              className="absolute bg-green-400 rounded-full opacity-30"
-              style={{
-                width: 80 + index * 20,
-                height: 80 + index * 20,
-                top: `${20 + index * 15}%`,
-                left: `${15 + index * 20}%`,
+        {/* Live Map using Expo Maps */}
+        <MapView
+          ref={mapRef}
+          style={{ flex: 1 }}
+          initialRegion={{
+            latitude: location?.latitude || 40.7128,
+            longitude: location?.longitude || -74.0060,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+          showsUserLocation={true}
+          showsMyLocationButton={false}
+          showsCompass={false}
+          showsScale={false}
+        >
+          {/* Safe Zones as Green Circles */}
+          {safeZones.map((zone) => (
+            <Circle
+              key={`safe-${zone.id}`}
+              center={{
+                latitude: zone.lat,
+                longitude: zone.lng,
               }}
+              radius={zone.radius * 111320} // Convert degrees to meters
+              strokeColor="rgba(34, 197, 94, 0.8)"
+              fillColor="rgba(34, 197, 94, 0.2)"
+              strokeWidth={2}
             />
           ))}
-          
-          {/* Restricted Zones */}
-          {restrictedZones.map((zone, index) => (
-            <View
-              key={zone.id}
-              className="absolute bg-red-400 rounded-full opacity-40"
-              style={{
-                width: 60 + index * 15,
-                height: 60 + index * 15,
-                top: `${40 + index * 25}%`,
-                right: `${20 + index * 15}%`,
+
+          {/* Safe Zone Markers */}
+          {safeZones.map((zone) => (
+            <Marker
+              key={`safe-marker-${zone.id}`}
+              coordinate={{
+                latitude: zone.lat,
+                longitude: zone.lng,
               }}
+              title={zone.name}
+              description="Safe Zone"
+            >
+              <View className="bg-green-500 rounded-full p-2">
+                <Ionicons name="shield-checkmark" size={16} color="white" />
+              </View>
+            </Marker>
+          ))}
+
+          {/* Restricted Zones as Red Circles */}
+          {restrictedZones.map((zone) => (
+            <Circle
+              key={`restricted-${zone.id}`}
+              center={{
+                latitude: zone.lat,
+                longitude: zone.lng,
+              }}
+              radius={zone.radius * 111320} // Convert degrees to meters
+              strokeColor="rgba(239, 68, 68, 0.8)"
+              fillColor="rgba(239, 68, 68, 0.3)"
+              strokeWidth={2}
             />
           ))}
-          
-          {/* Current Location - Blue Dot */}
-          <View className="absolute top-1/2 left-1/2 transform -translate-x-3 -translate-y-3">
-            <View className="w-6 h-6 bg-blue-500 rounded-full border-4 border-white shadow-lg">
-              <View className="absolute inset-1 bg-blue-600 rounded-full" />
-            </View>
-            <View className="absolute -inset-4 bg-blue-400 rounded-full opacity-20 animate-pulse" />
-          </View>
-        </View>
+
+          {/* Restricted Zone Markers */}
+          {restrictedZones.map((zone) => (
+            <Marker
+              key={`restricted-marker-${zone.id}`}
+              coordinate={{
+                latitude: zone.lat,
+                longitude: zone.lng,
+              }}
+              title={zone.name}
+              description="Restricted Area - Stay Alert"
+            >
+              <View className="bg-red-500 rounded-full p-2">
+                <Ionicons name="warning" size={16} color="white" />
+              </View>
+            </Marker>
+          ))}
+        </MapView>
 
         {/* Map Controls */}
         <View className="absolute top-4 right-4 space-y-2" style={{ paddingTop: insets.top }}>
           {/* Zoom In */}
-          <Pressable className="w-10 h-10 bg-white rounded-lg shadow-md items-center justify-center">
+          <Pressable 
+            onPress={handleZoomIn}
+            className="w-10 h-10 bg-white rounded-lg shadow-md items-center justify-center"
+          >
             <Ionicons name="add" size={20} color="#374151" />
           </Pressable>
           
           {/* Zoom Out */}
-          <Pressable className="w-10 h-10 bg-white rounded-lg shadow-md items-center justify-center">
+          <Pressable 
+            onPress={handleZoomOut}
+            className="w-10 h-10 bg-white rounded-lg shadow-md items-center justify-center"
+          >
             <Ionicons name="remove" size={20} color="#374151" />
           </Pressable>
           
           {/* Center Location */}
-          <Pressable className="w-10 h-10 bg-white rounded-lg shadow-md items-center justify-center">
+          <Pressable 
+            onPress={centerToUserLocation}
+            className="w-10 h-10 bg-white rounded-lg shadow-md items-center justify-center"
+          >
             <Ionicons name="locate" size={18} color="#3B82F6" />
           </Pressable>
         </View>
